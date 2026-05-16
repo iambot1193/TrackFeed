@@ -79,20 +79,33 @@ export async function getUserFavorites(userIdParam: string) {
 /**
  * Adiciona uma notícia ao histórico de leitura do usuário.
  */
-export async function addToHistory(article: { title: string; url: string; imageUrl?: string }) {
+export async function addToHistory(data: { title: string; url: string; imageUrl?: string }) {
   const cookieStore = await cookies();
   const userId = cookieStore.get("userId")?.value;
   if (!userId) return;
 
   try {
-    await prisma.history.create({
-      data: {
-        userId,
-        title: article.title,
-        url: article.url,
-        imageUrl: article.imageUrl || ""
-      }
+    const existing = await prisma.history.findFirst({
+      where: { userId, url: data.url }
     });
+
+    if (existing) {
+      await prisma.history.update({
+        where: { id: existing.id },
+        data: { viewedAt: new Date() }
+      });
+    } else {
+      await prisma.history.create({
+        data: {
+          userId,
+          title: data.title,
+          url: data.url,
+          imageUrl: data.imageUrl || ""
+        }
+      });
+    }
+
+    revalidatePath("/dashboard");
   } catch (error) {}
 }
 
@@ -224,6 +237,8 @@ export async function deleteAccountAction(password: string) {
     return { error: "Erro crítico ao processar exclusão. Tente novamente." };
   }
 }
+
+
 
 /**
  * Busca o status atual da cota da API (para atualizações em tempo real no cliente).

@@ -1,27 +1,26 @@
 'use client'
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
   Cpu, Trophy, Briefcase, Film, FlaskConical, 
-  HeartPulse, Globe, Code2, Sparkles, Paintbrush, 
-  Gamepad2, Bitcoin, Clapperboard, Music, Shirt, Check,
-  Loader2, Palette
+  HeartPulse, Globe, Gamepad2, Bitcoin, Clapperboard, Music, Check,
+  Loader2, ArrowRight
 } from "lucide-react";
 import { saveInterests } from "./actions";
 
 const categories = [
-  { id: "technology", label: "Tecnologia", icon: Cpu, color: "from-blue-500 to-cyan-400" },
-  { id: "sports", label: "Esportes", icon: Trophy, color: "from-orange-500 to-yellow-400" },
-  { id: "science", label: "Ciência", icon: FlaskConical, color: "from-purple-500 to-indigo-400" },
-  { id: "health", label: "Saúde", icon: HeartPulse, color: "from-red-500 to-orange-400" },
-  { id: "general", label: "Geral", icon: Globe, color: "from-zinc-500 to-slate-400" },
-  { id: "games", label: "Games", icon: Gamepad2, color: "from-green-500 to-emerald-400" },
-  { id: "crypto", label: "Cripto", icon: Bitcoin, color: "from-yellow-600 to-orange-500" },
-  { id: "movies", label: "Cinema", icon: Clapperboard, color: "from-red-600 to-rose-500" },
-  { id: "music", label: "Música", icon: Music, color: "from-indigo-600 to-blue-500" },
-  { id: "business", label: "Negócios", icon: Briefcase, color: "from-emerald-600 to-green-500" },
+  { id: "technology", label: "Tecnologia", icon: Cpu },
+  { id: "sports", label: "Esportes", icon: Trophy },
+  { id: "science", label: "Ciência", icon: FlaskConical },
+  { id: "health", label: "Saúde", icon: HeartPulse },
+  { id: "general", label: "Geral", icon: Globe },
+  { id: "games", label: "Games", icon: Gamepad2 },
+  { id: "crypto", label: "Cripto", icon: Bitcoin },
+  { id: "movies", label: "Cinema", icon: Clapperboard },
+  { id: "music", label: "Música", icon: Music },
+  { id: "business", label: "Negócios", icon: Briefcase },
 ];
 
 const categoryStyles: Record<string, { border: string, bg: string, text: string, shadow: string }> = {
@@ -40,6 +39,15 @@ const categoryStyles: Record<string, { border: string, bg: string, text: string,
 export default function InterestsPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: (e.clientX / window.innerWidth - 0.5) * 15, y: (e.clientY / window.innerHeight - 0.5) * 15 });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const toggleCategory = (id: string) => {
     if (selected.includes(id)) {
@@ -61,66 +69,63 @@ export default function InterestsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-zinc-100 flex flex-col relative overflow-hidden">
-      {/* Background Decorative Blobs */}
+    <div className="min-h-screen bg-[#050505] text-zinc-100 flex flex-col relative overflow-hidden selection:bg-purple-500/30">
+      <div className="fixed inset-0 bg-noise opacity-[0.03] pointer-events-none z-[100]" />
+      
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-1/4 -left-1/4 w-[50%] h-[50%] bg-purple-600/5 blur-[150px] rounded-full animate-slow-float" />
-        <div className="absolute bottom-1/4 -right-1/4 w-[50%] h-[50%] bg-blue-600/5 blur-[150px] rounded-full animate-slow-float duration-1000" />
+        <div className="absolute inset-0 bg-grid-dots opacity-[0.2] mix-blend-overlay" />
+        <div className="absolute inset-0 transition-transform duration-75 ease-out" style={{ transform: `translate(${mousePos.x}px, ${mousePos.y}px)` }}>
+          <div className="absolute top-[-10%] left-[-10%] w-[80vw] h-[80vw] bg-purple-900/[0.12] blur-[200px] rounded-full animate-float-orb" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-blue-600/[0.08] blur-[180px] rounded-full animate-slow-pulse" />
+        </div>
       </div>
 
-      <header className="p-6 flex items-center justify-between border-b border-zinc-900 bg-zinc-950/20 backdrop-blur-3xl sticky top-0 z-50">
-        <div className="flex items-center gap-3 select-none">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center font-black text-white shadow-[0_0_20px_rgba(147,51,234,0.3)]">
+      <header className="p-8 lg:p-12 flex items-center justify-between relative z-50">
+        <div className="flex items-center gap-4 group cursor-pointer">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-black text-white shadow-2xl transition-transform group-hover:scale-110">
             TF
           </div>
-          <span className="hidden md:block text-xl font-black tracking-tighter uppercase italic bg-gradient-to-br from-white via-zinc-100 to-purple-400/50 bg-clip-text text-transparent">
-            TrackFeed
-          </span>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Sistema Online</span>
+          <span className="text-2xl font-black italic tracking-tighter text-white">TrackFeed</span>
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full p-6 py-8 relative z-10">
-        <div className="space-y-6 mb-20 text-center select-none animate-in fade-in slide-in-from-bottom-4 duration-1000">
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase italic">
-            O que te desperta <span className="bg-gradient-to-br from-purple-400 to-indigo-600 bg-clip-text text-transparent drop-shadow-2xl">curiosidade?</span>
+      <main className="flex-1 max-w-6xl mx-auto w-full p-8 relative z-10">
+        <div className="space-y-12 -mt-16 mb-20 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 px-4">
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[1.3] text-white italic py-8">
+            O que te desperta <br/>
+            <span className="text-glow bg-gradient-to-br from-purple-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent px-4">curiosidade?</span>
           </h1>
-          <p className="text-zinc-400 text-lg font-bold max-w-2xl mx-auto">
-            Escolha de 1 a 5 temas para personalizarmos seu feed com as notícias mais relevantes para você.
+          <p className="text-zinc-500 text-xl font-medium max-w-2xl mx-auto leading-relaxed">
+            Personalize sua inteligência. Escolha até 5 temas para nutrir seu feed imersivo.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
-          {categories.map((cat) => {
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8">
+          {categories.map((cat, idx) => {
             const isSelected = selected.includes(cat.id);
             const Icon = cat.icon;
-            const style = categoryStyles[cat.id] || categoryStyles.general;
+            const style = categoryStyles[cat.id];
 
             return (
               <Card
                 key={cat.id}
                 onClick={() => toggleCategory(cat.id)}
-                className={`group relative overflow-hidden cursor-pointer border-2 transition-all duration-500 h-40 flex flex-col items-center justify-center gap-4 select-none rounded-[2rem] ${
+                className={`group relative overflow-hidden cursor-pointer border backdrop-blur-2xl transition-all duration-700 h-48 flex flex-col items-center justify-center gap-6 rounded-[3rem] animate-in fade-in slide-in-from-bottom-12 duration-1000 ${
                   isSelected 
-                    ? `${style.border} ${style.bg} ${style.shadow} scale-105` 
-                    : "border-zinc-800/50 bg-zinc-950/40 backdrop-blur-sm hover:border-zinc-600 hover:bg-zinc-900/50"
+                    ? `${style.border} ${style.bg} ${style.shadow} scale-105 border-opacity-50` 
+                    : "border-white/5 bg-white/5 hover:border-white/20 hover:bg-white/[0.08]"
                 }`}
+                style={{ animationDelay: `${idx * 50}ms` }}
               >
-                {/* Check Badge */}
                 {isSelected && (
-                  <div className={`absolute top-4 right-4 ${style.bg.replace('/10', '')} rounded-full p-1.5 animate-in zoom-in duration-300 shadow-lg`}>
-                    <Check size={12} className="text-white" strokeWidth={4} />
+                  <div className={`absolute top-6 right-6 ${style.text} animate-in zoom-in duration-500`}>
+                    <Check size={20} strokeWidth={4} />
                   </div>
                 )}
-
-                <div className={`p-4 rounded-2xl transition-all duration-500 ${isSelected ? `scale-110 ${style.text}` : "text-zinc-600 group-hover:text-zinc-400 bg-white/5"}`}>
-                  <Icon size={40} strokeWidth={isSelected ? 2.5 : 2} />
+                <div className={`p-5 rounded-2xl transition-all duration-700 ${isSelected ? `scale-110 ${style.text}` : "text-zinc-600 group-hover:text-zinc-300 bg-white/5"}`}>
+                  <Icon size={44} strokeWidth={isSelected ? 2.5 : 2} />
                 </div>
-                <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${isSelected ? "text-white" : "text-zinc-500 group-hover:text-zinc-300"}`}>
+                <span className={`text-[10px] font-black uppercase tracking-[0.4em] transition-all duration-700 ${isSelected ? "text-white" : "text-zinc-600 group-hover:text-zinc-400"} leading-loose`}>
                   {cat.label}
                 </span>
               </Card>
@@ -128,58 +133,42 @@ export default function InterestsPage() {
           })}
         </div>
 
-        <div className="mt-20 flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-          <div className="flex items-center gap-3">
-             <div className="h-px w-12 bg-zinc-800" />
-             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
-               {selected.length} de 5 selecionados
+        <div className="mt-28 flex flex-col items-center gap-8 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
+          <div className="flex items-center gap-4">
+             <div className="h-[1px] w-16 bg-white/20" />
+             <span className="text-[11px] font-black uppercase tracking-[0.5em] text-zinc-300">
+               {selected.length} / 5 Selecionados
              </span>
-             <div className="h-px w-12 bg-zinc-800" />
+             <div className="h-[1px] w-16 bg-white/20" />
           </div>
 
           <Button 
             onClick={handleContinue}
             disabled={selected.length < 1 || selected.length > 5 || isPending}
-            className={`h-20 min-w-[380px] rounded-[2.5rem] font-black uppercase text-sm tracking-[0.3em] transition-all duration-500 shadow-2xl active:scale-95 group relative overflow-hidden ${
-              selected.length >= 1 && selected.length <= 5 
-                ? "bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white hover:brightness-110 hover:shadow-purple-500/30 scale-105" 
-                : "bg-zinc-900/50 text-zinc-600 border border-zinc-800 cursor-not-allowed"
+            className={`h-24 min-w-[450px] rounded-[3rem] font-black uppercase text-[12px] tracking-[0.4em] transition-all duration-700 shadow-2xl active:scale-95 group relative overflow-hidden ${
+              selected.length >= 1 
+                ? "bg-white text-black hover:bg-cyan-500 hover:text-white scale-105" 
+                : "bg-white/5 text-zinc-600 border border-white/5 cursor-not-allowed"
             }`}
           >
             {isPending ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <Loader2 className="animate-spin" size={24} />
-                <span>Personalizando...</span>
+                <span>Calibrando...</span>
               </div>
             ) : (
               <div className="flex items-center gap-4">
                 <span>Finalizar Escolha</span>
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center transition-all duration-500 ${selected.length >= 1 ? "bg-white/20 text-white" : "bg-zinc-800 text-zinc-600"}`}>
-                  <Check size={16} strokeWidth={4} />
-                </div>
+                <ArrowRight size={20} className="transition-transform group-hover:translate-x-2" />
               </div>
-            )}
-            
-            {/* Progress Bar Overlay at the bottom of the button */}
-            {selected.length >= 1 && !isPending && (
-               <div 
-                 className="absolute bottom-0 left-0 h-1.5 bg-white/30 transition-all duration-500" 
-                 style={{ width: `${(selected.length / 5) * 100}%` }}
-               />
             )}
           </Button>
           
-          <p className={`text-[10px] font-black uppercase tracking-[0.2em] mt-2 transition-all duration-500 ${selected.length < 1 ? "text-purple-400 animate-pulse" : "text-zinc-600 opacity-50"}`}>
-            {selected.length < 1 ? "⚠️ Escolha pelo menos 1 tópico para continuar" : "Tudo pronto para começar!"}
+          <p className={`text-[10px] font-black uppercase tracking-[0.3em] transition-all duration-700 ${selected.length < 1 ? "text-cyan-500 animate-pulse" : "text-zinc-300"}`}>
+            {selected.length < 1 ? "⚠️ Escolha ao menos 1 tópico" : "Tudo pronto para começar sua leitura"}
           </p>
         </div>
       </main>
-
-      {/* Background Decorative Blobs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-1/4 -left-1/4 w-[50%] h-[50%] bg-purple-900/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-1/4 -right-1/4 w-[50%] h-[50%] bg-blue-900/10 blur-[120px] rounded-full" />
-      </div>
     </div>
   );
 }

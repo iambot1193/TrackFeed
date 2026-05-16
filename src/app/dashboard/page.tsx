@@ -95,20 +95,32 @@ export default async function DashboardPage({
   } else if (tab === 'history') {
     const pageSize = 50;
     
-    // RECUPERAÇÃO DE DETALHES ORIGINAIS:
-    const historyWithDetails = await Promise.all(history.map(async (h) => {
-      const cached = await prisma.cachedArticle.findUnique({ where: { url: h.url } });
-      return {
-        title: h.title,
-        description: "Lido em " + h.viewedAt.toLocaleDateString('pt-BR'),
-        url: h.url,
-        urlToImage: h.imageUrl || cached?.imageUrl || "",
-        publishedAt: h.viewedAt.toISOString(),
-        source: { name: "Histórico" },
-        category: cached?.category || "general", // Preserva a categoria original
-        language: cached?.language || "pt"
-      };
-    }));
+    const history = await prisma.history.findMany({
+      where: { userId: user.id },
+      orderBy: { viewedAt: 'desc' },
+      take: pageSize
+    });
+
+    // RECUPERAÇÃO DE DETALHES ORIGINAIS COM DEDUPLICAÇÃO POR URL:
+    const uniqueHistoryUrls = new Set<string>();
+    const historyWithDetails = [];
+
+    for (const h of history) {
+      if (!uniqueHistoryUrls.has(h.url)) {
+        uniqueHistoryUrls.add(h.url);
+        const cached = await prisma.cachedArticle.findUnique({ where: { url: h.url } });
+        historyWithDetails.push({
+          title: h.title,
+          description: h.viewedAt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+          url: h.url,
+          urlToImage: h.imageUrl || cached?.imageUrl || "",
+          publishedAt: h.viewedAt.toISOString(),
+          source: { name: "Histórico" },
+          category: cached?.category || "general", 
+          language: cached?.language || "pt"
+        });
+      }
+    }
 
     let filteredHistory = historyWithDetails;
 
@@ -116,12 +128,10 @@ export default async function DashboardPage({
       filteredHistory = filteredHistory.filter(h => h.title.toLowerCase().includes(query.toLowerCase()));
     }
 
-    // FILTRO DE CATEGORIAS (Opcional) - Persistente na troca de abas
     if (catParam) {
       filteredHistory = filteredHistory.filter(h => selectedCategories.includes(h.category.toLowerCase()));
     }
 
-    // MOSTRA TODO O HISTÓRICO (Até o limite de 50 do DB)
     news = filteredHistory;
 
 
