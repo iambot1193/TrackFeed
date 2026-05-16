@@ -92,7 +92,10 @@ export async function addToHistory(data: { title: string; url: string; imageUrl?
     if (existing) {
       await prisma.history.update({
         where: { id: existing.id },
-        data: { viewedAt: new Date() }
+        data: { 
+          viewedAt: new Date(),
+          clickCount: { increment: 1 } // Incrementa o contador de cliques
+        }
       });
     } else {
       await prisma.history.create({
@@ -106,63 +109,80 @@ export async function addToHistory(data: { title: string; url: string; imageUrl?
     }
 
     revalidatePath("/dashboard");
-  } catch (error) {}
+    console.log(`>>> LOG: Sucesso ao salvar histórico para URL: ${data.url}`);
+  } catch (error) {
+    console.error(">>> ERRO CRÍTICO AO SALVAR HISTÓRICO:", error);
+  }
 }
 
 /**
  * Atualiza o perfil do usuário (Nome, Foto, Senha).
  * Didático: Aplica as mesmas regras rígidas de segurança do Cadastro.
  */
-export async function updateUserProfile(data: { name?: string; avatarUrl?: string; password?: string, currentPassword?: string }) {
+export async function updateUserProfile(data: { 
+  name?: string; 
+  avatarUrl?: string; 
+  password?: string; 
+  currentPassword?: string;
+  interests?: string[]; // Adicionado campo de categorias
+  email?: string; // Suporte para e-mail
+}) {
   const cookieStore = await cookies();
   const userId = cookieStore.get("userId")?.value;
   if (!userId) return { error: "Usuário não autenticado." };
 
   try {
-    // 1. Busca dados atuais para validação cruzada
     const currentUser = await prisma.user.findUnique({
       where: { id: userId }
     });
 
     if (!currentUser) return { error: "Usuário não encontrado." };
 
-    // 1.5 VERIFICAÇÃO DE SENHA ATUAL (Obrigatória para trocar senha)
-    if (data.password) {
-      if (!data.currentPassword) return { error: "Você precisa informar sua senha atual para definir uma nova." };
+    // Senha é obrigatória tanto para mudar a senha quanto para mudar o email
+    if (data.password || data.email) {
+      if (!data.currentPassword) return { error: "Você precisa informar sua senha atual para autorizar esta alteração crítica." };
       const isCurrentValid = await bcrypt.compare(data.currentPassword, currentUser.passwordHash);
-      if (!isCurrentValid) return { error: "A senha atual informada está incorreta." };
+      if (!isCurrentValid) return { error: "A senha informada está incorreta." };
     }
 
     const updateData: any = {};
     if (data.name) updateData.name = data.name;
     if (data.avatarUrl) updateData.avatarUrl = data.avatarUrl;
     
-    // 2. Validação Rígida de Senha (Se fornecida)
+    if (data.email) {
+      const emailExists = await prisma.user.findFirst({
+        where: {
+          email: data.email,
+          NOT: { id: userId }
+        }
+      });
+      if (emailExists) return { error: "Este e-mail já está sendo utilizado por outro usuário." };
+      updateData.email = data.email;
+    }
+
     if (data.password) {
-      const cleanPassword = data.password.toLowerCase();
-      const cleanName = (data.name || currentUser.name || "").toLowerCase();
-      const cleanEmail = currentUser.email.toLowerCase();
-      const emailPart = cleanEmail.split('@')[0];
-
-      if (data.password.length < 6) {
-        return { error: "A nova senha deve ter pelo menos 6 caracteres." };
-      }
-
-      if (cleanPassword === cleanEmail || cleanPassword.includes(emailPart) || cleanEmail.includes(cleanPassword)) {
-        return { error: "A senha não pode ser parecida com o seu e-mail." };
-      }
-
-      if (cleanName && (cleanPassword === cleanName || cleanPassword.includes(cleanName) || cleanName.includes(cleanPassword))) {
-        return { error: "A senha não pode ser parecida com o seu nome." };
-      }
-
-      // Se passou em tudo, criptografa
+      if (data.password.length < 6) return { error: "A nova senha deve ter pelo menos 6 caracteres." };
       updateData.passwordHash = await bcrypt.hash(data.password, 10);
     }
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: updateData
+    // ATUALIZAÇÃO UNIFICADA: Perfil + Interesses
+    await prisma.$transaction(async (tx) => {
+      // Atualiza Nome/Senha
+      await tx.user.update({
+        where: { id: userId },
+        data: updateData
+      });
+
+      // Atualiza Categorias (se enviadas)
+      if (data.interests) {
+        await tx.preference.deleteMany({ where: { userId } });
+        await tx.preference.createMany({
+          data: data.interests.map(cat => ({
+            userId,
+            categoryName: cat
+          }))
+        });
+      }
     });
 
     revalidatePath("/dashboard");

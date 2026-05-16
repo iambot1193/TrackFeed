@@ -54,13 +54,14 @@ model Favorite {
 }
 
 model History {
-  id        String   @id @default(uuid())
-  userId    String
-  title     String
-  url       String
-  imageUrl  String?
-  viewedAt  DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  userId     String
+  title      String
+  url        String
+  imageUrl   String?  @default("")
+  clickCount Int      @default(1) // Novo campo para analytics
+  viewedAt   DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

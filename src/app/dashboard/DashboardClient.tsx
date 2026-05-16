@@ -1,616 +1,804 @@
 'use client'
 
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
 import {
-  Search, Menu, X, Check, AlertCircle, Bookmark as BookmarkIcon,
-  ArrowRight, Filter, ChevronDown, User, Settings, LogOut, Loader2, Key, Trash2, ShieldCheck,
-  Plus, Home, Compass, Bookmark, TrendingUp, Clock, Sparkles, Flame, SearchX, Camera,
-  Activity, Cpu, Languages, Globe
+  X, AlertCircle, Loader2, SearchX, Globe, Filter,
+  BookmarkIcon, ArrowRight, ShieldCheck, User, LogOut,
+  Settings, Camera, BarChart2, Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NewsArticle } from "@/lib/news";
+import { BackgroundEffects } from "./BackgroundEffects";
+import { Sidebar } from "./Sidebar";
+import { Header } from "./Header";
+import { FilterPopover } from "./FilterPopover";
+import { z } from "zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "@/components/theme-provider";
-import { toggleFavorite, addToHistory, updateUserProfile, logout, updateUserPreferences, deleteAccountAction, getApiStatusAction, summarizeNewsAction } from "./actions";
-
-interface DashboardClientProps {
-  initialNews: NewsArticle[];
-  user: {
-    name: string;
-    email: string;
-    avatarUrl: string;
-    isVerified: boolean;
-  };
-  interestCount: number;
-  currentFilters: {
-    languages: string[];
-    sort: string;
-    categories: string[];
-    query: string;
-    page: number;
-    tab: string;
-  };
-  availableCategories: string[];
-  favoriteUrls: string[];
-  apiStatus: {
-    newsApiRemaining: number;
-    newsApiQuota: number;
-    gnewsQuota: number;
-    lastUpdated: string;
-  };
-}
-
-const tagColors: Record<string, string> = {
-  technology: "bg-blue-600", sports: "bg-orange-600", science: "bg-purple-600",
-  health: "bg-red-600", general: "bg-zinc-700", games: "bg-green-600",
-  crypto: "bg-yellow-700", movies: "bg-red-700", music: "bg-indigo-700", business: "bg-emerald-600",
-  Busca: "bg-purple-700", Favorito: "bg-amber-600", Lido: "bg-zinc-700", Geral: "bg-zinc-600"
-};
+import {
+  toggleFavorite, addToHistory, updateUserProfile, logout,
+  updateUserPreferences, deleteAccountAction, getApiStatusAction,
+  summarizeNewsAction
+} from "./actions";
 
 const ALL_POSSIBLE_CATEGORIES = [
-  { slug: "general", label: "Geral" },
-  { slug: "technology", label: "Tecnologia" },
-  { slug: "sports", label: "Esportes" },
-  { slug: "science", label: "Ciência" },
-  { slug: "health", label: "Saúde" },
-  { slug: "games", label: "Games" },
-  { slug: "crypto", label: "Cripto" },
-  { slug: "movies", label: "Cinema" },
-  { slug: "music", label: "Música" },
-  { slug: "business", label: "Negócios" }
+  { slug: 'general', label: 'Geral' },
+  { slug: 'technology', label: 'Tecnologia' },
+  { slug: 'business', label: 'Negócios' },
+  { slug: 'entertainment', label: 'Entretenimento' },
+  { slug: 'health', label: 'Saúde' },
+  { slug: 'science', label: 'Ciência' },
+  { slug: 'sports', label: 'Esportes' }
 ];
+
+const tagColors: any = {
+  general: 'bg-zinc-500',
+  technology: 'bg-cyan-500',
+  business: 'bg-blue-500',
+  entertainment: 'bg-purple-500',
+  health: 'bg-green-500',
+  science: 'bg-amber-500',
+  sports: 'bg-orange-500'
+};
 
 export default function DashboardClient({
   initialNews,
   user,
+  interestCount,
   currentFilters,
   availableCategories,
   favoriteUrls,
-  apiStatus
-}: DashboardClientProps) {
+  apiStatus,
+  historyStats
+}: any) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { theme } = useTheme();
+
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState(currentFilters.tab || 'home');
-  const [dismissedAlert, setDismissedAlert] = useState(false);
-  const [immersiveArticle, setImmersiveArticle] = useState<NewsArticle | null>(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [particles, setParticles] = useState<{ top: string, left: string, delay: string, opacity: number }[]>([]);
+  const [newsList, setNewsList] = useState<NewsArticle[]>(initialNews);
+  const [favorites, setFavorites] = useState<string[]>(favoriteUrls || []);
+  const [history, setHistory] = useState<string[]>(user.history || []);
+  const [localSearch, setLocalSearch] = useState(currentFilters.q || '');
+  const [localCategories, setLocalCategories] = useState<string[]>(
+    typeof currentFilters.categories === 'string'
+      ? currentFilters.categories.split(',')
+      : Array.isArray(currentFilters.categories) ? currentFilters.categories : []
+  );
+  const [localLangs, setLocalLangs] = useState<string[]>(
+    typeof currentFilters.lang === 'string'
+      ? currentFilters.lang.split(',')
+      : Array.isArray(currentFilters.lang) ? currentFilters.lang : ['pt']
+  );
+  const [isPending, startTransition] = useTransition();
+  const [scrolled, setScrolled] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(9);
+  const [showTagPopover, setShowTagPopover] = useState(false);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Profile state
+  const [profileName, setProfileName] = useState(user.name);
+  const [profileAvatarUrl, setProfileAvatarUrl] = useState(user.avatarUrl || "");
+  const [profileCategories, setProfileCategories] = useState<string[]>(user.interests || []);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  // Modal password states
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState("");
+
+  // Modal email states
+  const [newEmail, setNewEmail] = useState("");
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+
+  // Premium toast notification state
+  const [showHistoryStats, setShowHistoryStats] = useState(false);
+  const [savedPreviousCategories, setSavedPreviousCategories] = useState<string[]>([]);
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+    show: false,
+    message: "",
+    type: "info"
+  });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToast({ show: true, message, type });
+  };
 
   useEffect(() => {
-    setMounted(true);
-    const newParticles = [...Array(40)].map(() => ({
-      top: `${Math.random() * 100}%`,
-      left: `${Math.random() * 100}%`,
-      delay: `${Math.random() * 5}s`,
-      opacity: Math.random() * 0.5
-    }));
-    setParticles(newParticles);
+    if (toast.show) {
+      const timer = setTimeout(() => {
+        setToast(prev => ({ ...prev, show: false }));
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.show]);
 
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: (e.clientX / window.innerWidth - 0.5) * 20, y: (e.clientY / window.innerHeight - 0.5) * 20 });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  const [dismissedAlert, setDismissedAlert] = useState(false);
 
-  const isWarm = mounted && theme === 'light';
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [isPending, startTransition] = useTransition();
-  const [showTagPopover, setShowTagPopover] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const [profileName, setProfileName] = useState(user.name);
-  const [profileAvatar, setProfileAvatar] = useState(user.avatarUrl);
-  const [profilePassword, setProfilePassword] = useState("");
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [profileCategories, setProfileCategories] = useState<string[]>(availableCategories);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const [deletePassword, setDeletePassword] = useState("");
-  const [localApiStatus, setLocalApiStatus] = useState(apiStatus);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
-  const [scrolled, setScrolled] = useState(false);
-
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 150);
+    setMounted(true);
+    const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
-  const showNotify = (message: string, type: 'success' | 'error' = 'success') => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 4000);
-  };
-
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab) setActiveTab(tab as any);
-  }, [searchParams]);
-
-  const [localSearch, setLocalSearch] = useState(currentFilters.query);
-  const [newsList, setNewsList] = useState<NewsArticle[]>(initialNews);
-  const [favState, setFavState] = useState<string[]>(favoriteUrls);
-
-  const lastSyncTime = mounted ? new Date(localApiStatus.lastUpdated).toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  }) : "--:--";
-
-  const [localCategories, setLocalCategories] = useState<string[]>(currentFilters.categories);
-  const [localLangs, setLocalLangs] = useState<string[]>(currentFilters.languages);
-  const [brokenUrls, setBrokenUrls] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    setLocalCategories(currentFilters.categories);
-    setLocalLangs(currentFilters.languages);
-  }, [currentFilters.categories, currentFilters.languages]);
-
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
-        setShowTagPopover(false);
-      }
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setShowUserMenu(false);
-      }
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) setShowTagPopover(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setShowUserMenu(false);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
+  // SINCRONIZAÇÃO CRÍTICA: Atualiza a lista quando os dados do servidor mudam
   useEffect(() => {
-    const refreshQuota = async () => {
-      const newStatus = await getApiStatusAction();
-      setLocalApiStatus(newStatus);
-    };
-    refreshQuota();
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (!initialNews) return;
-
     if (currentFilters.page === 1) {
       setNewsList(initialNews);
+      setVisibleCount(9);
     } else {
       setNewsList(prev => {
-        const existingUrls = new Set(prev.map(a => a.url));
-        const newArticles = initialNews.filter(a => !existingUrls.has(a.url));
-        if (newArticles.length === 0) return prev;
-        return [...prev, ...newArticles];
+        const seen = new Set();
+        const combined = [...prev, ...initialNews];
+        return combined.filter(item => {
+          if (seen.has(item.url)) return false;
+          seen.add(item.url);
+          return true;
+        });
       });
     }
-  }, [initialNews, currentFilters.page, currentFilters.tab]);
-
-  useEffect(() => { setFavState(favoriteUrls); }, [favoriteUrls]);
+  }, [initialNews]);
 
   const updateFilters = (key: string, value: any) => {
-    // Feedback instantâneo local (Otimista)
+    const params = new URLSearchParams(searchParams.toString());
+
     if (key === 'categories') {
+      const current = localCategories;
+      let updated: string[] = [];
+
       if (value === 'general') {
-        setLocalCategories(['general']);
-      } else {
-        setLocalCategories(prev => {
-          if (prev.includes('general')) return [value];
-          return prev.includes(value) ? prev.filter(c => c !== value) : [...prev, value];
-        });
-      }
-    }
-    if (key === 'lang') {
-      setLocalLangs(prev => prev.includes(value) ? prev.filter(l => l !== value) : [...prev, value]);
-    }
-
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString());
-
-      if (key === 'categories' || key === 'lang') {
-        let newVals: string[] = [];
-        const currentVals = params.get(key)?.split(',').filter(Boolean) || [];
-
-        if (key === 'categories' && value === 'general') {
-          // Se clicar em Geral, limpa as outras categorias
-          newVals = ['general'];
-        } else if (key === 'categories' && currentVals.includes('general')) {
-          // Se clicar em outra categoria e 'general' estiver ativo, remove 'general' e adiciona a nova
-          newVals = [value];
+        if (current.includes('general')) {
+          // Desativando 'general' -> Restaura o estado anterior das categorias
+          updated = savedPreviousCategories.length > 0 ? savedPreviousCategories : [];
+          setSavedPreviousCategories([]);
         } else {
-          // Lógica de toggle normal para os outros casos
-          newVals = currentVals.includes(value)
-            ? currentVals.filter(v => v !== value)
-            : [...currentVals, value];
+          // Ativando 'general' -> Salva a seleção atual (apenas se a memória estiver vazia) e ativa APENAS 'general'
+          if (savedPreviousCategories.length === 0) {
+            setSavedPreviousCategories(current.filter(c => c !== 'general'));
+          }
+          updated = ['general'];
         }
-
-        if (newVals.length > 0) params.set(key, newVals.join(','));
-        else params.delete(key);
-      } else if (Array.isArray(value)) {
-        params.set(key, value.join(','));
       } else {
-        params.set(key, value.toString());
+        // Alternando outra categoria individual
+        // Se 'general' estava ativo, removemos ele
+        const filteredCurrent = current.filter(c => c !== 'general');
+        updated = filteredCurrent.includes(value)
+          ? filteredCurrent.filter(c => c !== value)
+          : [...filteredCurrent, value];
+
+        // Se TODAS as categorias específicas (ou todos os interesses do usuário) forem ativadas, colapsa para 'general'
+        const allSpecificSlugs = ['technology', 'business', 'entertainment', 'health', 'science', 'sports'];
+        const userSpecificInterests = profileCategories.filter(c => c !== 'general');
+
+        const hasAllGlobal = allSpecificSlugs.every(slug => updated.includes(slug));
+        const hasAllUser = userSpecificInterests.length > 0 && userSpecificInterests.every(c => updated.includes(c));
+
+        if (hasAllGlobal || hasAllUser) {
+          // Quando consolidado automaticamente, salvamos os filtros anteriores (sem a última selecionada) para que ao desativar o Geral volte a eles!
+          setSavedPreviousCategories(filteredCurrent);
+          updated = ['general'];
+        }
       }
 
-      if (key !== 'page') params.set('page', '1');
+      if (updated.length === 0) {
+        updated = ['general'];
+        setSavedPreviousCategories([]);
+      }
+
+      if (updated.length > 0 && !updated.includes('general')) params.set('categories', updated.join(','));
+      else params.delete('categories');
+      setLocalCategories(updated);
+    } else if (key === 'lang') {
+      const current = localLangs;
+      const updated = current.includes(value)
+        ? (current.length > 1 ? current.filter(l => l !== value) : [value]) // Não permite ficar vazio, mantém o atual
+        : [...current, value];
+
+      params.set('lang', updated.join(','));
+      setLocalLangs(updated);
+    } else if (key === 'tab') {
+      setActiveTab(value);
+      params.set('tab', value);
+    } else if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+
+    if (key !== 'tab') params.set('page', '1');
+    startTransition(() => {
       router.push(`/dashboard?${params.toString()}`, { scroll: false });
-      if (key !== 'categories' && key !== 'lang') setShowTagPopover(false);
-      // Atualiza o status da API para refletir o novo horário de sincronização
-      getApiStatusAction().then(status => {
-        if (status) setLocalApiStatus(status);
-      });
     });
   };
 
-  const displayedNews = newsList.filter(article => !brokenUrls.has(article.url));
+  const handleLoadMore = () => {
+    if (visibleCount + 6 <= newsList.length) {
+      setVisibleCount(prev => prev + 6);
+    } else {
+      setVisibleCount(prev => prev + 6);
+      updateFilters('page', currentFilters.page + 1);
+    }
+  };
 
-  const handleFavoriteClick = async (article: NewsArticle) => {
-    // Feedback instantâneo local (Otimista)
-    const isAdding = !favState.includes(article.url);
-    setFavState(prev => isAdding ? [...prev, article.url] : prev.filter(u => u !== article.url));
-    showNotify(isAdding ? "Adicionado aos favoritos" : "Removido dos favoritos");
+  const handleFavorite = async (article: NewsArticle) => {
+    const updated = favorites.includes(article.url) ? favorites.filter(url => url !== article.url) : [...favorites, article.url];
+    setFavorites(updated);
 
-    const res = await toggleFavorite({
+    await toggleFavorite({
       title: article.title,
       url: article.url,
-      urlToImage: article.urlToImage || "",
+      urlToImage: article.urlToImage,
       sourceName: article.source.name,
       publishedAt: article.publishedAt
     });
+    // Força atualização dos dados do servidor
+    router.refresh();
+  };
 
-    if (res.error) {
-      showNotify(res.error, "error");
-      // Reverte se der erro
-      setFavState(prev => isAdding ? prev.filter(u => u !== article.url) : [...prev, article.url]);
+  const handleArticleClick = async (article: NewsArticle) => {
+    if (!history.includes(article.url)) {
+      setHistory([...history, article.url]);
+      await addToHistory({
+        title: article.title,
+        url: article.url,
+        imageUrl: article.urlToImage
+      });
+      // Sincroniza com o servidor imediatamente
+      router.refresh();
     }
+    window.open(article.url, '_blank');
   };
 
-  const handleNewsClick = (article: NewsArticle) => {
-    addToHistory({ title: article.title, url: article.url, imageUrl: article.urlToImage || "" });
-    window.open(article.url, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleSaveProfile = async () => {
+  const handleSavePersonalData = async () => {
+    if (!profileName.trim()) {
+      showToast("Seu nome não pode estar vazio.", "error");
+      return;
+    }
     setIsSavingProfile(true);
     const res = await updateUserProfile({
       name: profileName,
-      avatarUrl: profileAvatar,
-      password: isChangingPassword ? profilePassword : undefined,
-      currentPassword: isChangingPassword ? currentPassword : undefined
+      avatarUrl: profileAvatarUrl
     });
     setIsSavingProfile(false);
-    if (res.success) {
-      showNotify(isChangingPassword ? "Senha alterada com sucesso!" : "Perfil atualizado!");
-      setIsChangingPassword(false);
-      setProfilePassword("");
-      setCurrentPassword("");
+    if (res?.error) {
+      showToast(res.error, "error");
     } else {
-      showNotify(res.error || "Erro ao salvar.", "error");
+      showToast("Dados pessoais atualizados com sucesso!", "success");
+      router.refresh();
     }
   };
 
-  const deepSearchMsg = (searchParams.get('q') && newsList.length < 5) ? "Refinando busca com IA..." : "";
+  const handleSaveInterests = async () => {
+    setIsSavingProfile(true);
+    const res = await updateUserProfile({
+      interests: profileCategories
+    });
+    setIsSavingProfile(false);
+    if (res?.error) {
+      showToast(res.error, "error");
+    } else {
+      showToast("Seus interesses foram atualizados com sucesso!", "success");
+      router.refresh();
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      showToast("Por favor, preencha todos os campos de senha.", "error");
+      return;
+    }
+
+    const passwordSchema = z.string()
+      .min(8, "A nova senha deve ter no mínimo 8 caracteres")
+      .regex(/[A-Za-z]/, "A nova senha deve conter pelo menos uma letra")
+      .regex(/[0-9]/, "A nova senha deve conter pelo menos um número");
+
+    const result = passwordSchema.safeParse(newPassword);
+    if (!result.success) {
+      showToast(result.error.errors[0].message, "error");
+      return;
+    }
+
+    setIsSavingProfile(true);
+    const res = await updateUserProfile({
+      password: newPassword,
+      currentPassword: currentPassword
+    });
+    setIsSavingProfile(false);
+
+    if (res?.error) {
+      showToast(res.error, "error");
+    } else {
+      showToast("Senha alterada com sucesso!", "success");
+      setIsChangingPassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      router.refresh();
+    }
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!newEmail || !currentPassword) {
+      showToast("Por favor, preencha o novo e-mail e sua senha atual para confirmar.", "error");
+      return;
+    }
+
+    const emailSchema = z.string().email("Por favor, digite um e-mail válido.");
+    const result = emailSchema.safeParse(newEmail);
+    if (!result.success) {
+      showToast(result.error.errors[0].message, "error");
+      return;
+    }
+
+    setIsSavingProfile(true);
+    const res = await updateUserProfile({
+      email: newEmail,
+      currentPassword: currentPassword
+    });
+    setIsSavingProfile(false);
+
+    if (res?.error) {
+      showToast(res.error, "error");
+    } else {
+      showToast("E-mail atualizado com sucesso!", "success");
+      setIsChangingEmail(false);
+      setNewEmail("");
+      setCurrentPassword("");
+      router.refresh();
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deleteConfirmPassword) {
+      showToast("Por favor, digite sua senha para confirmar a exclusão da conta.", "error");
+      return;
+    }
+
+    const confirm = window.confirm("ATENÇÃO TOTAL: Esta ação excluirá permanentemente o seu perfil, favoritos e histórico do TrackFeed de forma irreversível. Tem certeza de que deseja prosseguir?");
+    if (!confirm) return;
+
+    setIsSavingProfile(true);
+    const res = await deleteAccountAction(deleteConfirmPassword);
+    setIsSavingProfile(false);
+
+    if (res?.error) {
+      showToast(res.error, "error");
+    } else {
+      showToast("Sua conta foi excluída com sucesso. Sentiremos sua falta!", "success");
+      logout();
+    }
+  };
+
+  if (!mounted) return null;
 
   return (
-    <div className={`min-h-screen ${isWarm ? 'bg-[#120804]' : 'bg-[#050505]'} text-foreground font-sans transition-colors duration-1000 selection:bg-cyan-500/30`}>
-      <div className="fixed inset-0 bg-noise opacity-[0.03] pointer-events-none z-[100]" />
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className={`absolute inset-0 bg-grid-dots opacity-[0.2] mix-blend-overlay transition-opacity duration-1000`} />
-        <div className="absolute inset-0 transition-transform duration-75 ease-out" style={{ transform: `translate(${mousePos.x}px, ${mousePos.y}px)` }}>
-          {isWarm ? (
-            <>
-              <div className="absolute -top-[10%] -left-[10%] w-[70vw] h-[70vw] bg-orange-600/[0.12] blur-[180px] rounded-full animate-float-orb mix-blend-plus-lighter" />
-              <div className="absolute bottom-[-5%] right-[-5%] w-[60vw] h-[60vw] bg-yellow-500/[0.08] blur-[150px] rounded-full animate-slow-pulse mix-blend-plus-lighter" />
-            </>
-          ) : (
-            <>
-              <div className="absolute -top-[20%] -left-[10%] w-[90vw] h-[90vw] bg-purple-900/[0.12] blur-[220px] rounded-full animate-float-orb mix-blend-screen" />
-              <div className="absolute bottom-[-10%] right-[-5%] w-[70vw] h-[70vw] bg-blue-600/[0.07] blur-[180px] rounded-full animate-slow-pulse mix-blend-plus-lighter" />
-              <div className="absolute top-[25%] left-[15%] w-[55vw] h-[55vw] bg-cyan-500/[0.05] blur-[160px] rounded-full animate-slow-float mix-blend-plus-lighter" />
-              <div className="absolute inset-0 opacity-[0.4] mix-blend-screen overflow-hidden">
-                {particles.map((p, i) => (
-                  <div key={i} className="absolute w-1 h-1 bg-white rounded-full animate-pulse" style={{ top: p.top, left: p.left, animationDelay: p.delay, opacity: p.opacity }} />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#020202]' : 'bg-[#f8fafc]'} font-sans selection:bg-cyan-500/30 transition-colors duration-700 overflow-x-hidden relative`}>
+      <BackgroundEffects />
 
-      {notification && (
-        <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[1000] px-8 py-4 rounded-[2rem] border backdrop-blur-2xl shadow-2xl flex items-center gap-4 animate-in slide-in-from-top-8 duration-500 ${notification.type === 'success' ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400' : 'bg-red-500/10 border-red-500/20 text-red-400'
-          }`}>
-          {notification.type === 'success' ? <Check size={20} /> : <AlertCircle size={20} />}
-          <span className="text-sm font-black uppercase tracking-widest">{notification.message}</span>
-        </div>
-      )}
+      <Sidebar
+        activeTab={activeTab}
+        updateFilters={updateFilters}
+        isSidebarOpen={isSidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        user={user}
+        logout={logout}
+        lastUpdated={apiStatus?.lastUpdated}
+      />
 
-      {/* TOPBAR */}
-      <header className="fixed top-0 left-0 lg:left-80 right-0 z-[500] glass-topbar backdrop-blur-[50px] bg-black/10 h-24 flex items-center px-8 lg:px-12 border-b border-white/[0.03]">
-        <div className="flex-1 flex items-center gap-6">
-          <div className="lg:hidden p-3 hover:bg-white/5 rounded-2xl text-white cursor-pointer transition-all" onClick={() => setSidebarOpen(!isSidebarOpen)}>
-            <Menu size={24} />
-          </div>
-          <div className="relative group w-full max-w-xl flex items-center gap-4">
-            <div className="relative w-full max-w-md">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-cyan-400 transition-colors" size={20} />
-              <Input
-                placeholder="Pesquisar notícias no radar..."
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && updateFilters('q', localSearch)}
-                className="w-full h-14 bg-white/[0.15] border-white/40 focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:bg-white/[0.25] focus-visible:border-white rounded-2xl pl-16 pr-6 text-base font-black text-white placeholder:text-zinc-300 transition-all shadow-[0_0_30px_rgba(255,255,255,0.1),0_10px_50px_rgba(0,0,0,0.8)] hover:bg-white/[0.2] hover:border-white/60"
-              />
-            </div>
-            <div className="w-[120px] flex-shrink-0">
-              {scrolled && (
-                <div className="relative animate-in fade-in slide-in-from-right-4 duration-300" ref={popoverRef}>
-                  <button onClick={() => setShowTagPopover(!showTagPopover)} className="h-14 w-full px-4 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center gap-3 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white/20 transition-all shadow-xl">
-                    <Filter size={16} className="text-cyan-500" /> Filtros
-                  </button>
-                  {showTagPopover && (
-                    <FilterPopover
-                      categories={ALL_POSSIBLE_CATEGORIES}
-                      selected={localCategories}
-                      onUpdate={(cat) => updateFilters('categories', cat)}
-                      selectedLang={localLangs}
-                      onUpdateLang={(lang) => updateFilters('lang', lang)}
-                    />
-                  )}
+      <Header
+        scrolled={scrolled}
+        isSidebarOpen={isSidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        localSearch={localSearch}
+        setLocalSearch={setLocalSearch}
+        updateFilters={updateFilters}
+        showTagPopover={showTagPopover}
+        setShowTagPopover={setShowTagPopover}
+        popoverRef={popoverRef}
+        ALL_POSSIBLE_CATEGORIES={ALL_POSSIBLE_CATEGORIES}
+        localCategories={localCategories}
+        localLangs={localLangs}
+        user={user}
+        showUserMenu={showUserMenu}
+        setShowUserMenu={setShowUserMenu}
+        userMenuRef={userMenuRef}
+        setIsChangingPassword={setIsChangingPassword}
+        logout={logout}
+      />
+
+      <main className="lg:pl-80 pt-32 pb-20 px-8 lg:px-12 relative z-10">
+        {activeTab === 'profile' ? (
+          <ProfileSection
+            user={user}
+            profileName={profileName}
+            setProfileName={setProfileName}
+            profileAvatarUrl={profileAvatarUrl}
+            setProfileAvatarUrl={setProfileAvatarUrl}
+            profileCategories={profileCategories}
+            setProfileCategories={setProfileCategories}
+            handleSavePersonalData={handleSavePersonalData}
+            handleSaveInterests={handleSaveInterests}
+            isSavingProfile={isSavingProfile}
+            logout={logout}
+            setIsChangingPassword={setIsChangingPassword}
+            setIsDeletingAccount={setIsDeletingAccount}
+            setIsChangingEmail={setIsChangingEmail}
+            ALL_POSSIBLE_CATEGORIES={ALL_POSSIBLE_CATEGORIES}
+          />
+        ) : (
+          <div className="max-w-7xl mx-auto space-y-16">
+            <header className="flex items-end justify-between mb-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-cyan-500 font-black text-xs uppercase tracking-[0.3em]">
+                  <div className="w-8 h-[1px] bg-cyan-500" />
+                  {activeTab === 'home' ? 'Seu Feed Pessoal' : activeTab === 'explore' ? 'Tendências Mundiais' : activeTab === 'history' ? 'Sua Jornada de Leitura' : 'Seus Favoritos'}
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
+                <h1 className="text-6xl font-black text-white tracking-tighter uppercase italic leading-none">
+                  {activeTab === 'home' ? 'Meu Feed' : activeTab === 'explore' ? 'Descobrir' : activeTab === 'history' ? 'Histórico' : 'Favoritos'}
+                  <span className="text-cyan-500">.</span>
+                </h1>
+              </div>
 
-        <div className="flex items-center gap-6">
-          <ThemeToggle />
-          <div className="relative" ref={userMenuRef}>
-            <div
-              className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 p-[1px] cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-xl"
-              onClick={() => setShowUserMenu(!showUserMenu)}
-            >
-              <div className="h-full w-full bg-[#0a0a0a] rounded-[inherit] overflow-hidden flex items-center justify-center">
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-white font-black text-xs uppercase tracking-tighter">{user.name.substring(0, 2)}</span>
+              <div className="relative pb-1" ref={popoverRef}>
+                <button
+                  onClick={() => setShowTagPopover(!showTagPopover)}
+                  className={`h-12 px-6 rounded-2xl flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl ${showTagPopover ? 'bg-cyan-600 border-cyan-500 text-white' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                    }`}
+                >
+                  <Filter size={16} className={showTagPopover ? 'text-white' : 'text-cyan-500'} />
+                  Linguagem & Filtros
+                </button>
+                {showTagPopover && (
+                  <FilterPopover
+                    categories={ALL_POSSIBLE_CATEGORIES}
+                    selected={localCategories}
+                    onUpdate={(cat: any) => updateFilters('categories', cat)}
+                    selectedLang={localLangs}
+                    onUpdateLang={(lang: any) => updateFilters('lang', lang)}
+                  />
                 )}
               </div>
-            </div>
+            </header>
 
-            {showUserMenu && (
-              <div className="absolute right-0 top-16 w-64 bg-[#0a0a0a] border border-white/10 rounded-3xl p-4 shadow-2xl z-[1000] animate-in fade-in zoom-in-95 duration-200">
-                <div className="px-4 py-3 border-b border-white/5 mb-2">
-                  <p className="text-xs font-black text-white uppercase truncate">{user.name}</p>
-                  <p className="text-[10px] text-zinc-500 truncate">{user.email}</p>
+            {(() => {
+              const userInterests = ALL_POSSIBLE_CATEGORIES.filter((cat: any) => 
+                profileCategories.includes(cat.slug)
+              );
+              const categoriesToRender = userInterests.length > 0 ? userInterests : ALL_POSSIBLE_CATEGORIES;
+              return (
+                <div className="flex items-center gap-3 overflow-x-auto pt-4 pb-6 mt-2 mb-4 scrollbar-none">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 flex items-center gap-2 pr-3 border-r border-white/10 shrink-0">
+                    <Settings size={12} className="text-cyan-500 animate-pulse" />
+                    Filtro Rápido
+                  </span>
+                  <div className="flex items-center gap-3">
+                    {categoriesToRender.map((cat: any) => {
+                      const isSelected = localCategories.includes(cat.slug);
+                      return (
+                        <button
+                          key={cat.slug}
+                          onClick={() => updateFilters('categories', cat.slug)}
+                          className={`h-10 px-5 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 shrink-0 border cursor-pointer ${
+                            isSelected 
+                              ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.25)]' 
+                              : 'bg-white/5 border-white/5 text-zinc-500 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          {cat.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <button onClick={() => { updateFilters('tab', 'profile'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:bg-white/5 hover:text-white transition-all text-[11px] font-black uppercase tracking-widest">
-                  <User size={16} /> Perfil
-                </button>
-                <button onClick={() => { setIsChangingPassword(true); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:bg-white/5 hover:text-white transition-all text-[11px] font-black uppercase tracking-widest">
-                  <Settings size={16} /> Trocar Senha
-                </button>
-                <div className="h-[1px] bg-white/5 my-2" />
-                <button onClick={() => logout()} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500/70 hover:bg-red-500/10 hover:text-red-500 transition-all text-[11px] font-black uppercase tracking-widest">
-                  <LogOut size={16} /> Sair
-                </button>
+              );
+            })()}
+
+            {(activeTab === 'history' || activeTab === 'favs') && historyStats && (
+              <div className="space-y-0">
+                <div className="flex flex-col items-start">
+                  <button
+                    onClick={() => setShowHistoryStats(!showHistoryStats)}
+                    className={`h-11 px-6 flex items-center gap-3 text-[10px] font-black uppercase tracking-wider transition-all duration-300 border cursor-pointer ${
+                      showHistoryStats 
+                        ? 'bg-purple-500/10 border-white/10 text-purple-400 rounded-t-[1.5rem] rounded-b-none border-b-0 relative z-20 translate-y-[1px]' 
+                        : 'bg-white/5 border-white/10 text-white rounded-2xl hover:bg-white/10'
+                    }`}
+                  >
+                    <BarChart2 size={14} className={showHistoryStats ? 'text-purple-400 animate-pulse' : 'text-cyan-500'} />
+                    {showHistoryStats 
+                      ? (activeTab === 'history' ? 'Ocultar Estatísticas de Leitura' : 'Ocultar Estatísticas de Favoritos')
+                      : (activeTab === 'history' ? 'Ver Estatísticas de Leitura' : 'Ver Estatísticas de Favoritos')}
+                  </button>
+                </div>
+
+                {showHistoryStats && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300 relative z-10">
+                    <HistoryStats stats={historyStats} isFavs={activeTab === 'favs'} />
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        </div>
-      </header>
 
-      {/* SIDEBAR */}
-      <aside className={`fixed left-0 top-0 bottom-0 z-[600] w-80 bg-[#050505]/20 backdrop-blur-[50px] border-r border-white/[0.03] transition-transform duration-700 ease-out lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-10 h-full flex flex-col">
-          <div className="flex items-center gap-4 mb-16 px-4">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center font-black text-white shadow-2xl">TF</div>
-            <h1 className="text-2xl font-black italic tracking-tighter text-white">TrackFeed</h1>
-          </div>
-          <nav className="space-y-4 flex-1 overflow-y-auto scrollbar-hide">
-            <div className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 px-6 mb-6">Navegação</div>
-            <NavIconItem icon={Home} label="Home" active={activeTab === 'home'} onClick={() => updateFilters('tab', 'home')} isWarm={isWarm} />
-            <NavIconItem icon={Compass} label="Descobrir" active={activeTab === 'explore'} onClick={() => updateFilters('tab', 'explore')} isWarm={isWarm} />
-            <NavIconItem icon={BookmarkIcon} label="Favoritos" active={activeTab === 'favs'} onClick={() => updateFilters('tab', 'favs')} isWarm={isWarm} />
-            <NavIconItem icon={Clock} label="Histórico" active={activeTab === 'history'} onClick={() => updateFilters('tab', 'history')} isWarm={isWarm} />
-            <div className="pt-12 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 px-6 mb-6">Configurações</div>
-            <NavIconItem icon={User} label="Perfil" active={activeTab === 'profile'} onClick={() => updateFilters('tab', 'profile')} isWarm={isWarm} />
-            
-            {/* STATUS DE SINCRONIZAÇÃO MINIMALISTA */}
-            <div className="mt-8 px-6 py-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
-               <div className="flex items-center gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]" />
-                  <span className="text-[8px] font-black text-zinc-600 uppercase tracking-[0.2em]">Sincronizado</span>
-               </div>
-               <span className="text-[10px] text-cyan-500/80 font-bold">{lastSyncTime}</span>
-            </div>
-          </nav>
-        </div>
-      </aside>
+            {isPending ? (
+              <NewsSkeletonGrid />
+            ) : newsList.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {newsList.slice(0, (activeTab === 'home' || activeTab === 'explore') ? visibleCount : 999999).map((article, idx) => (
+                    <PremiumNewsCard
+                      key={article.url}
+                      article={article}
+                      isFavorite={favorites.includes(article.url)}
+                      onFavorite={() => handleFavorite(article)}
+                      onClick={() => handleArticleClick(article)}
+                    />
+                  ))}
+                </div>
 
-      <main className={`transition-all duration-700 pt-24 min-h-screen lg:pl-80`}>
-        <div className="max-w-[1600px] mx-auto p-8 lg:p-12">
-          {activeTab === 'profile' ? (
-            <ProfileSection
-              user={user} profileName={profileName} setProfileName={setProfileName}
-              profileAvatar={profileAvatar} profileCategories={profileCategories}
-              setProfileCategories={setProfileCategories} handleSaveProfile={handleSaveProfile}
-              isSavingProfile={isSavingProfile} logout={logout}
-              localApiStatus={localApiStatus} lastSyncTime={lastSyncTime}
-              isChangingPassword={isChangingPassword} setIsChangingPassword={setIsChangingPassword}
-              currentPassword={currentPassword} setCurrentPassword={setCurrentPassword}
-              profilePassword={profilePassword} setProfilePassword={setProfilePassword}
-              deletePassword={deletePassword} setDeletePassword={setDeletePassword}
-              setIsDeletingAccount={setIsDeletingAccount}
-            />
-          ) : (
-            <section className="space-y-12 animate-in fade-in duration-1000">
-              {localApiStatus.newsApiRemaining <= 0 && !dismissedAlert && (
-                <QuotaAlert onDismiss={() => setDismissedAlert(true)} />
-              )}
-              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-12">
-                <h2 className="text-6xl font-black tracking-tighter text-white leading-none capitalize">
-                  {activeTab === 'home' ? 'Meu Feed' : activeTab === 'explore' ? 'Descobrir' : activeTab === 'favs' ? 'Favoritos' : 'Histórico'}
-                </h2>
-                {!scrolled && (
-                  <div className="flex flex-wrap gap-4">
-                    <div className="relative" ref={popoverRef}>
-                      <button 
-                        onClick={() => setShowTagPopover(!showTagPopover)} 
-                        className="group relative h-14 px-8 rounded-full bg-white/5 border border-white/10 flex items-center gap-4 transition-all duration-500 hover:scale-105 hover:bg-cyan-500/20 hover:border-cyan-500/50 shadow-2xl overflow-hidden"
-                      >
-                        <Filter size={18} className="text-cyan-500 group-hover:rotate-12 transition-transform duration-500" />
-                        <span className="text-white text-xs font-black uppercase tracking-[0.2em]">Idioma & Filtros</span>
-                        <div className="absolute inset-0 bg-cyan-500/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      </button>
-                      
-                      {showTagPopover && (
-                        <FilterPopover 
-                          categories={ALL_POSSIBLE_CATEGORIES} 
-                          selected={localCategories} 
-                          onUpdate={(cat) => updateFilters('categories', cat)}
-                          selectedLang={localLangs}
-                          onUpdateLang={(lang) => updateFilters('lang', lang)}
-                        />
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {displayedNews.length === 0 ? (
-                <EmptyState title="Opa! Nada por aqui..." description="Tente mudar os filtros ou categorias." isSearching={deepSearchMsg !== ""} />
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
-                    {activeTab === 'explore' && displayedNews.length > 0 && (
-                      <div className="col-span-full mb-4 cursor-pointer" onClick={() => handleNewsClick(displayedNews[0])}>
-                        <HeroArticle
-                          article={displayedNews[0]}
-                          isFavorite={favState.includes(displayedNews[0].url)}
-                          onFavorite={() => handleFavoriteClick(displayedNews[0])}
-                          onImmersive={() => handleNewsClick(displayedNews[0])}
-                        />
-                      </div>
-                    )}
-                    {(activeTab === 'explore' ? displayedNews.slice(1) : displayedNews).map((article, idx) => (
-                      <PremiumNewsCard
-                        key={article.url + idx} article={article} idx={idx}
-                        isFavorite={favState.includes(article.url)}
-                        onFavorite={() => handleFavoriteClick(article)}
-                        onClick={() => handleNewsClick(article)}
-                        onImageError={(url: string) => setBrokenUrls(prev => new Set(prev).add(url))}
-                      />
-                    ))}
-                  </div>
-
-                  {/* BOTÃO CARREGAR MAIS */}
+                {/* BOTÃO CARREGAR MAIS (Apenas nas abas que suportam paginação) */}
+                {(activeTab === 'home' || activeTab === 'explore') && (
                   <div className="mt-20 flex justify-center pb-20">
                     <button
-                      onClick={() => updateFilters('page', currentFilters.page + 1)}
-                      className="group relative h-24 w-24 rounded-[2.5rem] bg-white/[0.03] border border-white/10 flex items-center justify-center transition-all hover:scale-110 hover:bg-cyan-500 hover:border-cyan-400 active:scale-95 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                      onClick={handleLoadMore}
+                      className="group relative h-24 w-24 rounded-[2.5rem] bg-white/[0.03] border border-white/10 flex items-center justify-center transition-all hover:scale-110 hover:bg-cyan-500 hover:border-cyan-400 active:scale-95 shadow-[0_20px_50px_rgba(0,0,0,0.5)] cursor-pointer"
                     >
                       <Plus size={32} className="text-white group-hover:rotate-90 transition-transform duration-500" />
                       <div className="absolute inset-0 rounded-[inherit] bg-cyan-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
-                </>
-              )}
-            </section>
-          )}
-        </div>
+                )}
+              </>
+            ) : (
+              <EmptyState title="Nenhuma notícia encontrada" description="Tente ajustar seus filtros ou pesquisar por outro termo." />
+            )}
+          </div>
+        )}
       </main>
 
-      {immersiveArticle && <ImmersiveReader article={immersiveArticle} onClose={() => setImmersiveArticle(null)} />}
-
-      {/* MODAL TROCAR SENHA */}
+      {/* MODAL REDEFINIR ACESSO / SENHA */}
       {isChangingPassword && (
-        <div className="fixed inset-0 z-[2000] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] p-10 space-y-8 shadow-[0_50px_100px_-20px_rgba(0,0,0,1)]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-md p-10 rounded-[3rem] bg-zinc-950 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] space-y-8 animate-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between">
-              <div className="h-12 w-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500"><Key size={24} /></div>
-              <button onClick={() => setIsChangingPassword(false)} className="text-zinc-600 hover:text-white transition-all"><X size={24} /></button>
+              <h3 className="text-xl font-black text-white uppercase tracking-wider italic">Redefinir Senha</h3>
+              <button
+                onClick={() => { setIsChangingPassword(false); setCurrentPassword(""); setNewPassword(""); }}
+                className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all"
+              >
+                <X size={18} />
+              </button>
             </div>
-            <div>
-              <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Trocar Senha</h3>
-              <p className="text-zinc-500 text-sm font-bold mt-2">Mantenha sua conta protegida com uma senha forte.</p>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label className="text-white/60 font-black text-[10px] uppercase">Senha Atual</Label>
+                <Input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="bg-black/40 border-white/10 text-white h-14 rounded-2xl focus:border-cyan-500/50"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-white/60 font-black text-[10px] uppercase">Nova Senha</Label>
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="bg-black/40 border-white/10 text-white h-14 rounded-2xl focus:border-cyan-500/50"
+                  placeholder="Mínimo 8 caracteres"
+                />
+              </div>
             </div>
-            <div className="space-y-4">
-              <Input type="password" placeholder="Senha Atual" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="h-14 bg-white/5 border-white/5 rounded-2xl text-white" />
-              <Input type="password" placeholder="Nova Senha" value={profilePassword} onChange={(e) => setProfilePassword(e.target.value)} className="h-14 bg-white/5 border-white/5 rounded-2xl text-white" />
+
+            <div className="flex gap-4 pt-4">
+              <Button
+                onClick={() => { setIsChangingPassword(false); setCurrentPassword(""); setNewPassword(""); }}
+                className="flex-1 h-14 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-2xl border border-white/5 transition-all"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleUpdatePassword}
+                disabled={isSavingProfile}
+                className="flex-1 h-14 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase rounded-2xl shadow-xl transition-all"
+              >
+                {isSavingProfile ? <Loader2 className="animate-spin h-5 w-5" /> : "Confirmar"}
+              </Button>
             </div>
-            <Button onClick={handleSaveProfile} disabled={isSavingProfile} className="w-full h-14 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase tracking-widest rounded-2xl transition-all">
-              {isSavingProfile ? <Loader2 className="animate-spin" /> : "Confirmar Troca"}
-            </Button>
           </div>
         </div>
       )}
 
-      {/* MODAL DELETAR CONTA */}
+      {/* MODAL ALTERAR EMAIL */}
+      {isChangingEmail && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-md p-10 rounded-[3rem] bg-zinc-950 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] space-y-8 animate-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-black text-white uppercase tracking-wider italic">Alterar E-mail</h3>
+              <button
+                onClick={() => { setIsChangingEmail(false); setNewEmail(""); setCurrentPassword(""); }}
+                className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label className="text-white/60 font-black text-[10px] uppercase">Novo E-mail</Label>
+                <Input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="bg-black/40 border-white/10 text-white h-14 rounded-2xl focus:border-cyan-500/50"
+                  placeholder="novo.email@exemplo.com"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-white/60 font-black text-[10px] uppercase">Senha Atual</Label>
+                <Input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="bg-black/40 border-white/10 text-white h-14 rounded-2xl focus:border-cyan-500/50"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <Button
+                onClick={() => { setIsChangingEmail(false); setNewEmail(""); setCurrentPassword(""); }}
+                className="flex-1 h-14 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-2xl border border-white/5 transition-all"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleUpdateEmail}
+                disabled={isSavingProfile}
+                className="flex-1 h-14 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase rounded-2xl shadow-xl transition-all"
+              >
+                {isSavingProfile ? <Loader2 className="animate-spin h-5 w-5" /> : "Confirmar"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EXCLUIR CONTA */}
       {isDeletingAccount && (
-        <div className="fixed inset-0 z-[2000] bg-red-950/20 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-[#0a0a0a] border border-red-500/20 rounded-[2.5rem] p-10 space-y-8 shadow-[0_50px_100px_-20px_rgba(0,0,0,1)]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-md p-10 rounded-[3rem] bg-zinc-950 border border-red-500/20 shadow-[0_0_50px_rgba(239,68,68,0.15)] space-y-8 animate-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between">
-              <div className="h-12 w-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500"><Trash2 size={24} /></div>
-              <button onClick={() => setIsDeletingAccount(false)} className="text-zinc-600 hover:text-white transition-all"><X size={24} /></button>
+              <h3 className="text-xl font-black text-red-500 uppercase tracking-wider italic">Excluir Conta</h3>
+              <button
+                onClick={() => { setIsDeletingAccount(false); setDeleteConfirmPassword(""); }}
+                className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all"
+              >
+                <X size={18} />
+              </button>
             </div>
-            <div>
-              <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Deletar Conta</h3>
-              <p className="text-red-500/70 text-sm font-bold mt-2">Esta ação é permanente e irreversível.</p>
+
+            <div className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold leading-relaxed space-y-2">
+              <p>⚠️ ATENÇÃO: Esta ação é definitiva e removerá permanentemente:</p>
+              <ul className="list-disc list-inside space-y-1 text-red-300/80 pl-2">
+                <li>Seu perfil e dados pessoais</li>
+                <li>Seu feed e histórico de leitura</li>
+                <li>Todas as notícias salvas nos favoritos</li>
+              </ul>
             </div>
-            <div className="space-y-4">
-              <Label className="text-[10px] font-black uppercase text-zinc-500">Confirme sua senha para prosseguir</Label>
-              <Input type="password" placeholder="Sua senha atual" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="h-14 bg-white/5 border-white/5 rounded-2xl text-white" />
+
+            <div className="space-y-2">
+              <Label className="text-white/60 font-black text-[10px] uppercase">Confirme sua Senha</Label>
+              <Input
+                type="password"
+                value={deleteConfirmPassword}
+                onChange={(e) => setDeleteConfirmPassword(e.target.value)}
+                className="bg-black/40 border-white/10 text-white h-14 rounded-2xl focus:border-red-500/50"
+                placeholder="Digite sua senha de acesso"
+              />
             </div>
-            <Button
-              onClick={async () => {
-                const res = await deleteAccountAction(deletePassword);
-                if (!res.success) showNotify(res.error || "Erro", "error");
-              }}
-              className="w-full h-14 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_10px_20px_rgba(220,38,38,0.3)]"
-            >
-              Sim, Deletar Tudo
-            </Button>
+
+            <div className="flex gap-4 pt-4">
+              <Button
+                onClick={() => { setIsDeletingAccount(false); setDeleteConfirmPassword(""); }}
+                className="flex-1 h-14 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-2xl border border-white/5 transition-all"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleDeleteAccount}
+                disabled={isSavingProfile}
+                className="flex-1 h-14 bg-red-600 hover:bg-red-500 text-white font-black uppercase rounded-2xl shadow-xl shadow-red-600/25 transition-all"
+              >
+                {isSavingProfile ? <Loader2 className="animate-spin h-5 w-5" /> : "Excluir Conta"}
+              </Button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* PREMIUM GLASS TOAST NOTIFICATION */}
+      <div 
+        className={`fixed bottom-8 right-8 z-[200] flex items-center gap-4 px-6 py-4 rounded-2xl bg-zinc-950/95 border backdrop-blur-xl shadow-2xl transition-all duration-500 transform ${
+          toast.show 
+            ? 'translate-y-0 opacity-100 scale-100' 
+            : 'translate-y-4 opacity-0 scale-95 pointer-events-none'
+        } ${
+          toast.type === 'success' 
+            ? 'border-emerald-500/30 shadow-emerald-500/10' 
+            : toast.type === 'error' 
+              ? 'border-red-500/30 shadow-red-500/10' 
+              : 'border-cyan-500/30 shadow-cyan-500/10'
+        }`}
+      >
+        <div className={`h-8 w-8 rounded-xl flex items-center justify-center border ${
+          toast.type === 'success' 
+            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+            : toast.type === 'error' 
+              ? 'bg-red-500/10 border-red-500/20 text-red-400' 
+              : 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'
+        }`}>
+          {toast.type === 'success' ? (
+            <ShieldCheck size={18} />
+          ) : toast.type === 'error' ? (
+            <AlertCircle size={18} />
+          ) : (
+            <Globe size={18} />
+          )}
+        </div>
+        <div className="flex-1">
+          <p className="text-xs font-black text-white uppercase tracking-wider">{toast.type === 'success' ? 'Sucesso' : toast.type === 'error' ? 'Erro' : 'Notificação'}</p>
+          <p className="text-[11px] text-white/60 font-semibold mt-0.5">{toast.message}</p>
+        </div>
+        <button 
+          onClick={() => setToast(prev => ({ ...prev, show: false }))}
+          className="text-white/40 hover:text-white transition-colors"
+        >
+          <X size={14} />
+        </button>
+      </div>
     </div>
   );
 }
 
-// COMPONENTES AUXILIARES
-function NavIconItem({ icon: Icon, label, active, onClick, isWarm }: any) {
-  return (
-    <div onClick={onClick} className={`flex items-center gap-5 px-6 py-5 rounded-3xl cursor-pointer transition-all duration-700 relative group ${active ? "bg-cyan-500/10 text-cyan-400" : "text-zinc-600 hover:text-zinc-300"}`}>
-      <Icon size={24} strokeWidth={active ? 2.5 : 2} />
-      <span className="hidden lg:block font-black text-[13px] uppercase tracking-[0.25em]">{label}</span>
-      {active && <div className="absolute left-0 w-2 h-8 bg-cyan-500 rounded-r-full shadow-2xl" />}
-    </div>
-  );
-}
+// Sub-componentes auxiliares (Temporários aqui para garantir funcionamento)
 
-function PremiumNewsCard({ article, isFavorite, onFavorite, idx, onClick, onImageError }: any) {
-  const category = article.category || "Geral";
+function PremiumNewsCard({ article, isFavorite, onFavorite, onClick }: any) {
+  const category = article.category || "general";
   const colorClass = tagColors[category] || "bg-zinc-700";
 
-  if (!article.urlToImage) return null;
-
   return (
-    <div className="group relative border border-white/5 bg-white/5 backdrop-blur-2xl rounded-[3rem] transition-all duration-700 flex flex-col h-full hover:border-white/20 hover:-translate-y-3 overflow-hidden" onClick={onClick}>
+    <div className="group relative border border-white/5 bg-white/5 backdrop-blur-2xl rounded-[3rem] transition-all duration-700 flex flex-col h-full hover:border-white/20 hover:-translate-y-3 overflow-hidden cursor-pointer" onClick={onClick}>
       <div className="relative aspect-[16/9] m-3 rounded-[2rem] overflow-hidden">
-        <img
-          src={article.urlToImage}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          onError={() => onImageError(article.url)}
-        />
-        <div className="absolute top-4 right-4 flex gap-2">
-          <div className={`${colorClass} px-4 py-2 rounded-lg text-[8px] font-black uppercase text-white`}>{category}</div>
+        <img src={article.urlToImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+        <div className="absolute top-4 right-4">
+          <div className={`${colorClass} px-4 py-2 rounded-lg text-[8px] font-black uppercase text-white shadow-xl`}>{category}</div>
         </div>
       </div>
       <div className="p-7 flex flex-col flex-1 gap-4">
@@ -619,16 +807,12 @@ function PremiumNewsCard({ article, isFavorite, onFavorite, idx, onClick, onImag
           <span>{new Date(article.publishedAt).toLocaleDateString('pt-BR')}</span>
         </div>
         <h3 className="text-[1.1rem] font-black text-white line-clamp-2">{article.title}</h3>
-        <p className="text-[13px] text-white leading-relaxed line-clamp-2">{article.description}</p>
+        <p className="text-[13px] text-white/60 leading-relaxed line-clamp-2">{article.description}</p>
         <div className="mt-auto pt-6 flex items-center justify-between">
-          <button onClick={onClick} className="text-[10px] font-black uppercase text-cyan-500 flex items-center gap-2">Ver Notícia <ArrowRight size={14} /></button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); onFavorite(); }} 
-            className={`h-11 w-11 rounded-full flex items-center justify-center transition-all duration-500 border ${
-              isFavorite 
-                ? "bg-purple-500/20 border-purple-500/50 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)] scale-110" 
-                : "bg-white/5 border-white/10 text-zinc-600 hover:text-white hover:bg-white/10 hover:scale-110"
-            }`}
+          <button className="text-[10px] font-black uppercase text-cyan-500 flex items-center gap-2">Ver Mais <ArrowRight size={14} /></button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onFavorite(); }}
+            className={`h-11 w-11 rounded-full flex items-center justify-center transition-all duration-500 border ${isFavorite ? "bg-purple-500/20 border-purple-500/50 text-purple-400 shadow-xl scale-110" : "bg-white/5 border-white/10 text-zinc-600 hover:text-white"}`}
           >
             <BookmarkIcon size={18} fill={isFavorite ? "currentColor" : "none"} />
           </button>
@@ -638,168 +822,232 @@ function PremiumNewsCard({ article, isFavorite, onFavorite, idx, onClick, onImag
   );
 }
 
-function HeroArticle({ article, isFavorite, onFavorite, onImmersive }: any) {
-  return (
-    <div className="relative w-full h-[450px] rounded-[3rem] overflow-hidden group cursor-pointer border border-white/5" onClick={() => onImmersive(article)}>
-      {article.urlToImage && <img src={article.urlToImage} className="w-full h-full object-cover" />}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-      <div className="absolute bottom-0 left-0 p-12 w-full max-w-4xl space-y-6 text-white">
-        <div className="px-5 py-2.5 bg-cyan-600 inline-block rounded-xl text-[10px] font-black uppercase">Destaque</div>
-        <h2 className="text-5xl font-black tracking-tighter leading-none">{article.title}</h2>
-        <p className="text-white/80 text-lg line-clamp-2">{article.description}</p>
-        <div className="flex items-center gap-6">
-          <Button className="bg-white text-black rounded-2xl h-14 px-8 font-black uppercase">Modo Imersivo</Button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); onFavorite(); }} 
-            className={`h-14 w-14 rounded-full flex items-center justify-center transition-all duration-500 border backdrop-blur-xl ${
-              isFavorite 
-                ? "bg-purple-500/20 border-purple-500/50 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.4)] scale-110" 
-                : "bg-white/10 border-white/20 text-white hover:bg-white/20 hover:scale-110"
-            }`}
-          >
-            <BookmarkIcon size={24} fill={isFavorite ? "currentColor" : "none"} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-function ImmersiveReader({ article, onClose }: any) {
-  return (
-    <div className="fixed inset-0 z-[1000] bg-black/95 backdrop-blur-2xl flex flex-col items-center p-20 overflow-y-auto">
-      <button onClick={onClose} className="fixed top-8 right-8 text-white h-12 w-12 bg-white/10 rounded-full flex items-center justify-center"><X size={24} /></button>
-      <div className="w-full max-w-4xl space-y-12 text-white">
-        <div className="text-center space-y-4">
-          <div className="text-cyan-500 font-black uppercase tracking-widest">{article.source.name}</div>
-          <h1 className="text-6xl font-black tracking-tighter">{article.title}</h1>
-        </div>
-        <img src={article.urlToImage} className="w-full rounded-[3rem] shadow-2xl" />
-        <p className="text-2xl font-medium italic text-center">"{article.description}"</p>
-        <Button onClick={() => window.open(article.url, '_blank')} className="w-full h-16 bg-cyan-600 text-white font-black uppercase rounded-2xl">Ler no site original</Button>
-      </div>
-    </div>
-  );
-}
 
 function ProfileSection({
-  user, profileName, setProfileName, profileAvatar, profileCategories,
-  setProfileCategories, handleSaveProfile, isSavingProfile, logout,
-  localApiStatus, lastSyncTime, setIsChangingPassword, setIsDeletingAccount
+  user,
+  profileName,
+  setProfileName,
+  profileAvatarUrl,
+  setProfileAvatarUrl,
+  profileCategories,
+  setProfileCategories,
+  handleSavePersonalData,
+  handleSaveInterests,
+  isSavingProfile,
+  logout,
+  setIsChangingPassword,
+  setIsDeletingAccount,
+  setIsChangingEmail,
+  ALL_POSSIBLE_CATEGORIES
 }: any) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("A imagem é muito grande! Selecione um arquivo de no máximo 2MB para garantir a velocidade do sistema.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        setProfileAvatarUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
-    <section className="max-w-4xl mx-auto py-12 space-y-12">
-      <div className="flex items-center gap-8 p-12 rounded-[3.5rem] bg-white/5 border border-white/5 backdrop-blur-2xl">
-        <div className="h-32 w-32 rounded-[2.5rem] bg-zinc-900 flex items-center justify-center overflow-hidden border-2 border-cyan-500/20">
-          {profileAvatar ? <img src={profileAvatar} className="w-full h-full object-cover" /> : <span className="text-white text-3xl font-black">{user.name.substring(0, 1)}</span>}
+    <section className="max-w-4xl mx-auto py-12 space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        className="hidden"
+      />
+      <div className="flex items-center gap-8 p-12 rounded-[3.5rem] bg-white/5 border border-white/5 backdrop-blur-2xl relative overflow-hidden group">
+        <div
+          onClick={handleAvatarClick}
+          className="h-32 w-32 rounded-[2.5rem] bg-zinc-900 flex items-center justify-center overflow-hidden border-2 border-cyan-500/20 shadow-2xl cursor-pointer relative group/avatar transition-all duration-500 hover:border-cyan-500 hover:scale-105"
+        >
+          {profileAvatarUrl ? (
+            <img src={profileAvatarUrl} className="w-full h-full object-cover transition-opacity group-hover/avatar:opacity-40" onError={(e: any) => e.target.style.display = 'none'} />
+          ) : (
+            <span className="text-white text-3xl font-black group-hover/avatar:opacity-40">{user.name.substring(0, 2)}</span>
+          )}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+            <Camera size={24} className="text-cyan-400" />
+          </div>
         </div>
         <div className="flex-1">
-          <h2 className="text-4xl font-black text-white">{user.name}</h2>
-          {user.emailVerified && (
-            <div className="flex items-center gap-3 text-white text-sm font-bold uppercase"><ShieldCheck size={16} className="text-cyan-500" /> Conta Verificada</div>
-          )}
+          <h2 className="text-4xl font-black text-white tracking-tighter">{user.name}</h2>
+          <div className="flex items-center gap-3 text-cyan-500 text-sm font-bold uppercase tracking-widest mt-2">
+            <ShieldCheck size={16} /> Conta Verificada
+          </div>
         </div>
-        <Button onClick={logout} className="bg-red-500/20 text-red-400 h-14 w-14 rounded-2xl"><LogOut size={20} /></Button>
+        <div className="flex gap-4">
+          <Button onClick={logout} className="bg-white/5 hover:bg-white/10 text-white h-16 w-16 rounded-2xl transition-all border border-white/5 shadow-lg"><LogOut size={24} /></Button>
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="p-10 rounded-[3rem] bg-white/5 border border-white/5 space-y-8 flex flex-col">
-          <h3 className="text-xl font-black text-white uppercase tracking-widest">Dados Pessoais</h3>
-          <div className="space-y-4 flex-1">
-            <Label className="text-white font-black text-[10px] uppercase">Nome</Label>
-            <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} className="bg-black/40 text-white" />
-          </div>
 
-          <div className="pt-8 flex flex-col gap-4">
-            <Button onClick={() => setIsChangingPassword(true)} className="w-full h-14 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest rounded-2xl border border-white/5 transition-all">Redefinir Acesso</Button>
-            <Button onClick={handleSaveProfile} disabled={isSavingProfile} className="w-full h-14 bg-cyan-600 text-white font-black uppercase tracking-widest rounded-2xl">Salvar Alterações</Button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+        {/* CARD DADOS PESSOAIS */}
+        <div className="p-10 rounded-[3rem] bg-white/5 border border-white/5 space-y-8 flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-black text-white uppercase tracking-widest italic mb-2">Dados Pessoais</h3>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label className="text-white/60 font-black text-[10px] uppercase">Seu Nome</Label>
+                <Input
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  className="bg-black/40 border-white/10 text-white h-14 rounded-2xl focus:border-cyan-500/50"
+                  placeholder="Seu nome"
+                />
+              </div>
+              <div className="pt-6 grid grid-cols-2 gap-4">
+                <Button
+                  type="button"
+                  onClick={() => setIsChangingEmail(true)}
+                  className="w-full h-12 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-2xl border border-white/5 transition-all text-xs tracking-wider"
+                >
+                  Alterar E-mail
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setIsChangingPassword(true)}
+                  className="w-full h-12 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-2xl border border-white/5 transition-all text-xs tracking-wider"
+                >
+                  Alterar Senha
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="p-10 rounded-[3rem] bg-white/5 border border-white/5 space-y-8 flex flex-col">
-          <h3 className="text-xl font-black text-white uppercase tracking-widest">Categorias</h3>
-          <div className="flex flex-wrap gap-2 flex-1">
-            {ALL_POSSIBLE_CATEGORIES.map(cat => (
-              <button 
-                key={cat.slug} 
-                onClick={() => setProfileCategories((p: any) => p.includes(cat.slug) ? p.filter((c: any) => c !== cat.slug) : [...p, cat.slug])} 
-                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border transition-all ${profileCategories.includes(cat.slug) ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-white/5 text-zinc-600'}`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-          <Button onClick={() => updateUserPreferences(profileCategories)} className="w-full h-14 bg-purple-600/20 text-purple-400 font-black uppercase tracking-widest rounded-2xl">Atualizar Interesses</Button>
+          <Button onClick={handleSavePersonalData} disabled={isSavingProfile} className="w-full h-14 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase rounded-2xl shadow-xl transition-all">Salvar Alterações</Button>
         </div>
 
-        <div className="col-span-full p-10 rounded-[3rem] bg-red-500/5 border border-red-500/20 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="space-y-2">
-            <h3 className="text-xl font-black text-red-500 uppercase tracking-widest">Zona Crítica</h3>
-            <p className="text-zinc-500 text-sm font-bold">Deseja remover sua conta permanentemente?</p>
+        {/* CARD INTERESSES */}
+        <div className="p-10 rounded-[3rem] bg-white/5 border border-white/5 space-y-8 flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-black text-white uppercase tracking-widest italic mb-6">Interesses</h3>
+            <div className="flex flex-wrap gap-3 items-start content-start">
+              {ALL_POSSIBLE_CATEGORIES.map((cat: any) => (
+                <button
+                  key={cat.slug}
+                  onClick={() => setProfileCategories((p: any) => p.includes(cat.slug) ? p.filter((c: any) => c !== cat.slug) : [...p, cat.slug])}
+                  className={`px-5 py-3 rounded-2xl text-xs font-black uppercase border transition-all ${profileCategories.includes(cat.slug) ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-xl' : 'bg-white/5 border-white/5 text-zinc-600 hover:text-white'}`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <Button onClick={() => setIsDeletingAccount(true)} className="h-14 px-12 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/20 font-black uppercase tracking-widest rounded-2xl transition-all">Deletar Conta</Button>
+          <Button onClick={handleSaveInterests} disabled={isSavingProfile} className="w-full h-14 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase rounded-2xl shadow-xl shadow-purple-600/10 transition-all">Atualizar Interesses</Button>
+        </div>
+      </div>
+
+      {/* CARD ZONA DE PERIGO (LARGURA TOTAL) */}
+      <div className="p-10 rounded-[3rem] bg-red-500/5 border border-red-500/10 hover:border-red-500/20 transition-all space-y-6 flex flex-col">
+        <h3 className="text-xl font-black text-red-500 uppercase tracking-widest italic flex items-center gap-3">
+          <AlertCircle size={20} className="text-red-500" />
+          Zona de Perigo
+        </h3>
+        <p className="text-xs text-white/40 font-bold leading-relaxed">ATENÇÃO TOTAL: Esta ação excluirá permanentemente o seu perfil, favoritos e histórico do TrackFeed de forma irreversível.</p>
+        <div className="pt-2">
+          <Button onClick={() => setIsDeletingAccount(true)} className="w-full h-14 bg-red-950/20 hover:bg-red-600 text-red-500 hover:text-white font-black uppercase rounded-2xl border border-red-500/20 transition-all shadow-xl shadow-red-950/30">Excluir Conta Permanentemente</Button>
         </div>
       </div>
     </section>
   );
 }
 
-function QuotaAlert({ onDismiss }: any) {
+function NewsSkeletonGrid() {
   return (
-    <div className="p-8 rounded-[2.5rem] bg-amber-500/5 border border-amber-500/20 flex items-center gap-8 relative">
-      <button onClick={onDismiss} className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-all"><X size={16} /></button>
-      <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.2)]"><AlertCircle size={32} /></div>
-      <div>
-        <h4 className="text-lg font-black uppercase text-white tracking-widest italic">MODO ARQUIVO</h4>
-        <p className="text-zinc-500 text-sm font-bold">Limite de busca atingido. Mude o idioma para buscar novos resultados ou veja as notícias que já foram pesquisadas.</p>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
+      {[...Array(6)].map((_, i) => (
+        <div 
+          key={i} 
+          className="h-[480px] rounded-[2.5rem] bg-white/5 border border-white/5 p-8 flex flex-col justify-between animate-pulse"
+        >
+          <div className="space-y-6">
+            {/* Imagem Placeholder */}
+            <div className="h-48 w-full bg-white/5 rounded-[2rem]" />
+            
+            {/* Linha Categoria / Data */}
+            <div className="flex gap-4">
+              <div className="h-4 w-16 bg-white/5 rounded-full" />
+              <div className="h-4 w-24 bg-white/5 rounded-full" />
+            </div>
+
+            {/* Linha Título */}
+            <div className="space-y-3">
+              <div className="h-6 w-full bg-white/5 rounded-xl" />
+              <div className="h-6 w-5/6 bg-white/5 rounded-xl" />
+            </div>
+          </div>
+
+          {/* Linha Botão de Ação */}
+          <div className="flex justify-between items-center pt-6">
+            <div className="h-5 w-20 bg-white/5 rounded-full" />
+            <div className="h-8 w-8 bg-white/5 rounded-full" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
-function FilterPopover({ categories, selected, onUpdate, selectedLang, onUpdateLang }: any) {
-  return (
-    <div className="absolute right-0 top-16 w-80 bg-[#0a0a0a] border border-white/10 rounded-[2rem] p-8 shadow-2xl z-[100] space-y-8">
-      <div className="space-y-4">
-        <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2"><Globe size={12} /> Idioma do Feed</div>
-        <div className="flex gap-2">
-          <button onClick={() => onUpdateLang('pt')} className={`flex-1 h-10 rounded-xl text-[10px] font-black uppercase border transition-all ${selectedLang.includes('pt') ? 'bg-cyan-600 border-cyan-500 text-white' : 'bg-white/5 border-white/5 text-zinc-500'}`}>Português</button>
-          <button onClick={() => onUpdateLang('en')} className={`flex-1 h-10 rounded-xl text-[10px] font-black uppercase border transition-all ${selectedLang.includes('en') ? 'bg-cyan-600 border-cyan-500 text-white' : 'bg-white/5 border-white/5 text-zinc-500'}`}>English</button>
-        </div>
-      </div>
+function HistoryStats({ stats, isFavs }: any) {
+  const categories = Object.entries(stats.categories).sort((a: any, b: any) => b[1] - a[1]);
+  const total = stats.totalRead;
 
-      <div className="space-y-4">
-        <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2"><Filter size={12} /> Categorias Ativas</div>
-        <div className="flex flex-wrap gap-2">
-          {categories.map((cat: any) => (
-            <button 
-              key={cat.slug} 
-              onClick={() => onUpdate(cat.slug)} 
-              className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${selected.includes(cat.slug) ? 'bg-cyan-500 text-white shadow-[0_5px_15px_rgba(6,182,212,0.3)]' : 'bg-white/5 text-zinc-500 hover:text-white'}`}
-            >
-              {cat.label}
-            </button>
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16 animate-in fade-in slide-in-from-top-8 duration-1000">
+      <div className="lg:col-span-2 p-10 rounded-[3rem] bg-white/5 border border-white/10 backdrop-blur-3xl space-y-8">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-black text-white uppercase tracking-widest italic">Distribuição por Tópico</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+          {categories.map(([cat, count]: any) => (
+            <div key={cat} className="space-y-2">
+              <div className="flex justify-between text-[10px] font-black uppercase">
+                <span className="text-white/60">{cat}</span>
+                <span className="text-cyan-400">{Math.round((count / total) * 100)}%</span>
+              </div>
+              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${tagColors[cat] || 'bg-zinc-500'} transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(6,182,212,0.5)]`}
+                  style={{ width: `${(count / total) * 100}%` }}
+                />
+              </div>
+            </div>
           ))}
         </div>
       </div>
+
+      <div className="rounded-[3rem] bg-gradient-to-br from-cyan-600/10 to-purple-600/5 border border-cyan-500/10 backdrop-blur-3xl p-10 flex flex-col justify-center items-center text-center space-y-2 shadow-2xl h-full">
+        <div className="text-7xl font-black text-white tracking-tighter">{stats.totalClicks}</div>
+        <div className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em]">Total de Interações</div>
+      </div>
     </div>
   );
 }
 
-function EmptyState({ title, description, isSearching }: any) {
+function EmptyState({ title, description }: any) {
   return (
-    <div className="flex flex-col items-center justify-center py-32 text-center">
-      {isSearching ? <Loader2 size={40} className="animate-spin text-purple-500 mb-8" /> : <SearchX size={40} className="text-zinc-700 mb-8" />}
-      <h3 className="text-2xl font-black uppercase text-zinc-400">{isSearching ? "Buscando..." : title}</h3>
-      <p className="text-zinc-600 text-sm font-bold">{description}</p>
-    </div>
-  );
-}
-
-function SkeletonGrid({ isExplore }: any) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="aspect-[16/9] bg-zinc-900 rounded-[3rem] animate-pulse" />
-      ))}
+    <div className="flex flex-col items-center justify-center py-40 text-center animate-in fade-in zoom-in duration-700">
+      <SearchX size={64} className="text-zinc-800 mb-8" />
+      <h3 className="text-3xl font-black uppercase text-zinc-500 tracking-tighter">{title}</h3>
+      <p className="text-zinc-600 font-bold mt-2">{description}</p>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { fetchNewsWithFilters, getApiStatus } from "@/lib/news";
+import { fetchNewsWithFilters, getApiStatus, NewsArticle } from "@/lib/news";
 import DashboardClient from "./DashboardClient";
 import { getUserFavorites } from "./actions";
 
@@ -58,11 +58,10 @@ export default async function DashboardPage({
   const catParam = params.categories as string;
   const selectedCategories = catParam ? catParam.split(",") : user.preferences.map(p => p.categoryName);
 
-  let news = [];
+  let news: NewsArticle[] = [];
+  let historyStats: any = null;
   
   if (tab === 'favs') {
-    const pageSize = 30;
-    // RECUPERAÇÃO DE CATEGORIA E IDIOMA ORIGINAIS:
     const favsWithDetails = await Promise.all(favorites.map(async (f) => {
       const cached = await prisma.cachedArticle.findUnique({ where: { url: f.url } });
       return {
@@ -72,68 +71,87 @@ export default async function DashboardPage({
         urlToImage: f.imageUrl || "",
         publishedAt: f.publishedAt?.toISOString() || f.savedAt.toISOString(),
         source: { name: f.source || "Fonte" },
-        category: cached?.category || "general", // Preserva a categoria original
+        category: cached?.category || "general", 
         language: cached?.language || "pt"
-      };
+      } as NewsArticle;
     }));
 
-    let allFavs = favsWithDetails;
+    const stats = {
+      totalRead: favsWithDetails.length,
+      totalClicks: favsWithDetails.length,
+      categories: {} as Record<string, number>
+    };
 
-    // FILTRO DE BUSCA (Texto) - Apenas se o usuário digitar algo
-    if (query) {
-      allFavs = allFavs.filter(f => f.title.toLowerCase().includes(query.toLowerCase()));
+    for (const article of favsWithDetails) {
+      const cat = article.category || "general";
+      stats.categories[cat] = (stats.categories[cat] || 0) + 1;
     }
+    
+    const langFiltered = favsWithDetails.filter(article => languages.includes(article.language || "pt"));
 
-    // FILTRO DE CATEGORIAS (Opcional) - Persistente na troca de abas
     if (catParam) {
-      allFavs = allFavs.filter(f => selectedCategories.includes(f.category.toLowerCase()));
+      const cats = catParam.split(",");
+      if (cats.includes('general')) {
+        news = langFiltered;
+      } else {
+        news = langFiltered.filter(article => cats.includes(article.category));
+      }
+    } else {
+      news = langFiltered;
     }
 
-    // SEM PAGINAÇÃO PARA FAVORITOS: MOSTRA TUDO DE UMA VEZ
-    news = allFavs;
+    historyStats = stats;
 
   } else if (tab === 'history') {
     const pageSize = 50;
-    
-    const history = await prisma.history.findMany({
+    const historyEntries = await prisma.history.findMany({
       where: { userId: user.id },
       orderBy: { viewedAt: 'desc' },
       take: pageSize
     });
 
-    // RECUPERAÇÃO DE DETALHES ORIGINAIS COM DEDUPLICAÇÃO POR URL:
+    const stats = {
+      totalRead: historyEntries.length,
+      totalClicks: historyEntries.reduce((acc, h) => acc + (h.clickCount || 1), 0),
+      categories: {} as Record<string, number>
+    };
+
     const uniqueHistoryUrls = new Set<string>();
     const historyWithDetails = [];
 
-    for (const h of history) {
+    for (const h of historyEntries) {
+      const cached = await prisma.cachedArticle.findUnique({ where: { url: h.url } });
+      const cat = cached?.category || "general";
+      stats.categories[cat] = (stats.categories[cat] || 0) + 1;
+
       if (!uniqueHistoryUrls.has(h.url)) {
         uniqueHistoryUrls.add(h.url);
-        const cached = await prisma.cachedArticle.findUnique({ where: { url: h.url } });
         historyWithDetails.push({
           title: h.title,
-          description: h.viewedAt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+          description: h.viewedAt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
           url: h.url,
           urlToImage: h.imageUrl || cached?.imageUrl || "",
           publishedAt: h.viewedAt.toISOString(),
-          source: { name: "Histórico" },
-          category: cached?.category || "general", 
+          source: { name: `Visto ${h.clickCount || 1}x` },
+          category: cat, 
           language: cached?.language || "pt"
-        });
+        } as NewsArticle);
       }
     }
 
-    let filteredHistory = historyWithDetails;
-
-    if (query) {
-      filteredHistory = filteredHistory.filter(h => h.title.toLowerCase().includes(query.toLowerCase()));
-    }
+    const langFiltered = historyWithDetails.filter(article => languages.includes(article.language || "pt"));
 
     if (catParam) {
-      filteredHistory = filteredHistory.filter(h => selectedCategories.includes(h.category.toLowerCase()));
+      const cats = catParam.split(",");
+      if (cats.includes('general')) {
+        news = langFiltered;
+      } else {
+        news = langFiltered.filter(article => cats.includes(article.category));
+      }
+    } else {
+      news = langFiltered;
     }
-
-    news = filteredHistory;
-
+    historyStats = stats;
 
   } else if (tab === 'explore') {
     news = await fetchNewsWithFilters({
@@ -142,7 +160,6 @@ export default async function DashboardPage({
       query: query || "", page
     });
   } else if (tab === 'profile') {
-    // ECONOMIA DE COTA E PERFORMANCE: Se está no perfil, não carrega notícias
     news = [];
   } else {
     news = await fetchNewsWithFilters({
@@ -150,17 +167,18 @@ export default async function DashboardPage({
     });
   }
 
-  // AGORA BUSCAMOS O STATUS DA COTA (APÓS O FETCH ACIMA ATUALIZAR O DB)
   const apiStatus = await getApiStatus();
 
   return (
     <DashboardClient 
       initialNews={news} 
+      historyStats={historyStats}
       user={{
         name: user.name || "Usuário",
         email: user.email,
         avatarUrl: user.avatarUrl || "",
-        isVerified: !!user.emailVerified
+        isVerified: !!user.emailVerified,
+        interests: user.preferences.map(p => p.categoryName)
       }}
       interestCount={user.preferences.length}
       currentFilters={{

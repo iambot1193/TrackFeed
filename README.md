@@ -39,22 +39,28 @@ cd track2feed
 npm install
 ```
 
-### 3. Configure as variáveis de ambiente
-Crie um arquivo `.env` baseado no `.env.example` e preencha suas chaves de API:
-- `GEMINI_API_KEY` (Obtenha no Google AI Studio)
-- `NEWS_API_KEY` (NewsAPI.org)
-- `DATABASE_URL` (Sua instância PostgreSQL)
+### 3. Configuração do Ambiente (.env)
+Crie um arquivo `.env` na raiz do projeto e copie o conteúdo de `.env.example`. Você precisará configurar:
+- **Banco de Dados**: `DATABASE_URL` (PostgreSQL).
+- **IA**: `GEMINI_API_KEY` (Google AI Studio).
+- **Notícias**: `NEWS_API_KEY`, `GNEWS_API_KEY` e `GUARDIAN_API_KEY`.
+- **E-mail (Opcional)**: Configurações de SMTP para verificação de conta.
 
-### 4. Setup do Banco de Dados
+### 4. Sincronização do Banco de Dados (Prisma)
+Para preparar o banco de dados e gerar o cliente do ORM:
 ```bash
+# Gera o cliente Prisma baseado no schema
 npx prisma generate
+
+# Sincroniza o schema diretamente com o banco (Ideal para Dev/Testes)
 npx prisma db push
 ```
 
-### 5. Rode o servidor de desenvolvimento
+### 5. Inicie o Servidor
 ```bash
 npm run dev
 ```
+O dashboard estará disponível em `http://localhost:3000`.
 
 ## 📈 Roadmap
 
