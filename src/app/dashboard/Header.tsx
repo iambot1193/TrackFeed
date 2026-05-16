@@ -11,7 +11,7 @@ export function Header({
   user, showUserMenu, setShowUserMenu, userMenuRef, setIsChangingPassword, logout
 }: any) {
   return (
-    <header className="fixed top-0 left-0 lg:left-80 right-0 z-[500] glass-topbar backdrop-blur-[50px] bg-black/10 h-24 flex items-center px-8 lg:px-12 border-b border-white/[0.03]">
+    <header className={`fixed top-0 left-0 lg:left-72 right-0 z-[500] h-16 flex items-center px-6 lg:px-8 border-b border-white/[0.03] transition-all duration-300 ${scrolled ? 'bg-[#020202]/85 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.5)]' : 'bg-transparent backdrop-blur-none'}`}>
       <div className="flex-1 flex items-center gap-6">
         <div className="lg:hidden p-3 hover:bg-white/5 rounded-2xl text-white cursor-pointer transition-all" onClick={() => setSidebarOpen(!isSidebarOpen)}>
           <Menu size={24} />
@@ -24,7 +24,7 @@ export function Header({
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && updateFilters('q', localSearch)}
-              className="w-full h-14 bg-white/[0.15] border-white/40 focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:bg-white/[0.25] focus-visible:border-white rounded-2xl pl-16 pr-6 text-base font-black text-white placeholder:text-zinc-300 transition-all shadow-[0_0_30px_rgba(255,255,255,0.1),0_10px_50px_rgba(0,0,0,0.8)] hover:bg-white/[0.2] hover:border-white/60"
+              className="w-full h-10 bg-white/[0.15] border-white/40 focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:bg-white/[0.25] focus-visible:border-white rounded-2xl pl-16 pr-6 text-base font-black text-white placeholder:text-zinc-300 transition-all shadow-[0_0_30px_rgba(255,255,255,0.1),0_10px_50px_rgba(0,0,0,0.8)] hover:bg-white/[0.2] hover:border-white/60"
             />
           </div>
           
@@ -34,7 +34,7 @@ export function Header({
               <div className="relative animate-in fade-in slide-in-from-right-4 duration-500" ref={popoverRef}>
                 <button 
                   onClick={() => setShowTagPopover(!showTagPopover)} 
-                  className={`h-14 w-full px-6 rounded-2xl border flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 shadow-xl ${
+                  className={`h-10 w-full px-6 rounded-2xl border flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 shadow-xl ${
                     showTagPopover ? 'bg-cyan-600 border-cyan-500 text-white shadow-[0_0_30px_rgba(6,182,212,0.4)]' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
                   }`}
                 >
@@ -61,7 +61,7 @@ export function Header({
         <ThemeToggle />
         <div className="relative" ref={userMenuRef}>
           <div
-            className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 p-[1px] cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-xl"
+            className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 p-[1px] cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-xl"
             onClick={() => setShowUserMenu(!showUserMenu)}
           >
             <div className="h-full w-full bg-[#0a0a0a] rounded-[inherit] overflow-hidden flex items-center justify-center">
@@ -74,7 +74,7 @@ export function Header({
           </div>
 
           {showUserMenu && (
-            <div className="absolute right-0 top-16 w-64 bg-[#0a0a0a] border border-white/10 rounded-3xl p-4 shadow-2xl z-[1000] animate-in fade-in zoom-in-95 duration-200">
+            <div className="absolute right-0 top-14 w-64 bg-[#0a0a0a] border border-white/10 rounded-3xl p-4 shadow-2xl z-[1000] animate-in fade-in zoom-in-95 duration-200">
               <div className="px-4 py-3 border-b border-white/5 mb-2">
                 <p className="text-xs font-black text-white uppercase truncate">{user.name}</p>
                 <p className="text-[10px] text-zinc-500 truncate">{user.email}</p>

@@ -19,8 +19,8 @@ export function BackgroundEffects() {
     // Handler isolado para o mouse
     const handleMouseMove = (e: MouseEvent) => {
       setMousePos({ 
-        x: (e.clientX / window.innerWidth - 0.5) * 50, 
-        y: (e.clientY / window.innerHeight - 0.5) * 50 
+        x: (e.clientX / window.innerWidth - 0.5) * 400, 
+        y: (e.clientY / window.innerHeight - 0.5) * 550 
       });
     };
     
@@ -43,14 +43,28 @@ export function BackgroundEffects() {
         }}
       />
 
-      {/* NEBULA ORBS */}
-      <div 
-        className="absolute inset-0 transition-transform duration-700 ease-out"
-        style={{ transform: `translate(${mousePos.x}px, ${mousePos.y}px) scale(1.1)` }}
-      >
-        <div className="absolute -top-[20%] -left-[10%] w-[90vw] h-[90vw] bg-purple-900/[0.12] blur-[220px] rounded-full animate-float-orb mix-blend-screen" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[80vw] h-[80vw] bg-blue-900/[0.1] blur-[200px] rounded-full animate-slow-pulse mix-blend-screen" />
-        <div className="absolute top-[20%] right-[10%] w-[60vw] h-[60vw] bg-cyan-900/[0.08] blur-[180px] rounded-full animate-float-orb mix-blend-screen" />
+      {/* NEBULA ORBS (Multi-Layered 3D Parallax) */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Orb 1: Purple (Top-Left / Left - 1.5x speed) */}
+        <div 
+          className="absolute -top-[20%] -left-[5%] w-[100vw] h-[100vw] bg-purple-900/[0.14] blur-[220px] rounded-full animate-float-orb mix-blend-screen transition-transform duration-500 ease-out"
+          style={{ transform: `translate(${mousePos.x * 1.5}px, ${mousePos.y * 1.5}px) scale(1.15)` }}
+        />
+        {/* Orb 2: Blue (Bottom-Right / Right - 1.5x speed) */}
+        <div 
+          className="absolute bottom-[-10%] right-[-10%] w-[85vw] h-[85vw] bg-blue-900/[0.12] blur-[200px] rounded-full animate-slow-pulse mix-blend-screen transition-transform duration-500 ease-out"
+          style={{ transform: `translate(${mousePos.x * 1.5}px, ${mousePos.y * 1.5}px) scale(1.1)` }}
+        />
+        {/* Orb 3: Cyan (Mid-Right / Center - 1.2x speed) */}
+        <div 
+          className="absolute top-[10%] right-[5%] w-[70vw] h-[70vw] bg-cyan-900/[0.1] blur-[180px] rounded-full animate-float-orb mix-blend-screen transition-transform duration-500 ease-out"
+          style={{ transform: `translate(${mousePos.x * 1.2}px, ${mousePos.y * 1.2}px) scale(1.1)` }}
+        />
+        {/* Orb 4: Magenta (Top-Center / Upper - 1.8x speed) */}
+        <div 
+          className="absolute -top-[10%] left-[20%] w-[60vw] h-[60vw] bg-pink-900/[0.07] blur-[160px] rounded-full animate-slow-pulse mix-blend-screen transition-transform duration-500 ease-out"
+          style={{ transform: `translate(${mousePos.x * 1.8}px, ${mousePos.y * 1.8}px) scale(1.1)` }}
+        />
       </div>
 
       {/* PARTÍCULAS FLUTUANTES */}

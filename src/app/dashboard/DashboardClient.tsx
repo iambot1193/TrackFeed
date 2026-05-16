@@ -77,7 +77,8 @@ export default function DashboardClient({
   const [isPending, startTransition] = useTransition();
   const [scrolled, setScrolled] = useState(false);
   const [visibleCount, setVisibleCount] = useState(9);
-  const [showTagPopover, setShowTagPopover] = useState(false);
+  const [showMainPopover, setShowMainPopover] = useState(false);
+  const [showHeaderPopover, setShowHeaderPopover] = useState(false);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -122,7 +123,8 @@ export default function DashboardClient({
 
   const [dismissedAlert, setDismissedAlert] = useState(false);
 
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const mainPopoverRef = useRef<HTMLDivElement>(null);
+  const headerPopoverRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -131,7 +133,8 @@ export default function DashboardClient({
     window.addEventListener('scroll', handleScroll);
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) setShowTagPopover(false);
+      if (mainPopoverRef.current && !mainPopoverRef.current.contains(event.target as Node)) setShowMainPopover(false);
+      if (headerPopoverRef.current && !headerPopoverRef.current.contains(event.target as Node)) setShowHeaderPopover(false);
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setShowUserMenu(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -413,9 +416,12 @@ export default function DashboardClient({
         localSearch={localSearch}
         setLocalSearch={setLocalSearch}
         updateFilters={updateFilters}
-        showTagPopover={showTagPopover}
-        setShowTagPopover={setShowTagPopover}
-        popoverRef={popoverRef}
+        showTagPopover={showHeaderPopover}
+        setShowTagPopover={(val: boolean) => {
+          setShowHeaderPopover(val);
+          if (val) setShowMainPopover(false);
+        }}
+        popoverRef={headerPopoverRef}
         ALL_POSSIBLE_CATEGORIES={ALL_POSSIBLE_CATEGORIES}
         localCategories={localCategories}
         localLangs={localLangs}
@@ -427,7 +433,7 @@ export default function DashboardClient({
         logout={logout}
       />
 
-      <main className="lg:pl-80 pt-32 pb-20 px-8 lg:px-12 relative z-10">
+      <main className="lg:pl-72 pt-22 pb-16 px-6 lg:px-8 relative z-10">
         {activeTab === 'profile' ? (
           <ProfileSection
             user={user}
@@ -447,29 +453,33 @@ export default function DashboardClient({
             ALL_POSSIBLE_CATEGORIES={ALL_POSSIBLE_CATEGORIES}
           />
         ) : (
-          <div className="max-w-7xl mx-auto space-y-16">
+          <div className="max-w-6xl mx-auto space-y-10">
             <header className="flex items-end justify-between mb-6">
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center gap-3 text-cyan-500 font-black text-xs uppercase tracking-[0.3em]">
                   <div className="w-8 h-[1px] bg-cyan-500" />
                   {activeTab === 'home' ? 'Seu Feed Pessoal' : activeTab === 'explore' ? 'Tendências Mundiais' : activeTab === 'history' ? 'Sua Jornada de Leitura' : 'Seus Favoritos'}
                 </div>
-                <h1 className="text-6xl font-black text-white tracking-tighter uppercase italic leading-none">
+                <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic leading-none">
                   {activeTab === 'home' ? 'Meu Feed' : activeTab === 'explore' ? 'Descobrir' : activeTab === 'history' ? 'Histórico' : 'Favoritos'}
                   <span className="text-cyan-500">.</span>
                 </h1>
               </div>
 
-              <div className="relative pb-1" ref={popoverRef}>
+              <div className="relative pb-1" ref={mainPopoverRef}>
                 <button
-                  onClick={() => setShowTagPopover(!showTagPopover)}
-                  className={`h-12 px-6 rounded-2xl flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl ${showTagPopover ? 'bg-cyan-600 border-cyan-500 text-white' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                  onClick={() => {
+                    const next = !showMainPopover;
+                    setShowMainPopover(next);
+                    if (next) setShowHeaderPopover(false);
+                  }}
+                  className={`h-12 px-6 rounded-2xl flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl ${showMainPopover ? 'bg-cyan-600 border-cyan-500 text-white' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
                     }`}
                 >
-                  <Filter size={16} className={showTagPopover ? 'text-white' : 'text-cyan-500'} />
+                  <Filter size={16} className={showMainPopover ? 'text-white' : 'text-cyan-500'} />
                   Linguagem & Filtros
                 </button>
-                {showTagPopover && (
+                {showMainPopover && (
                   <FilterPopover
                     categories={ALL_POSSIBLE_CATEGORIES}
                     selected={localCategories}
@@ -488,7 +498,7 @@ export default function DashboardClient({
               const categoriesToRender = userInterests.length > 0 ? userInterests : ALL_POSSIBLE_CATEGORIES;
               return (
                 <div className="flex items-center gap-3 overflow-x-auto pt-4 pb-6 mt-2 mb-4 scrollbar-none">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 flex items-center gap-2 pr-3 border-r border-white/10 shrink-0">
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 flex items-center gap-2 pr-3 border-r border-white/10 shrink-0">
                     <Settings size={12} className="text-cyan-500 animate-pulse" />
                     Filtro Rápido
                   </span>
@@ -499,7 +509,7 @@ export default function DashboardClient({
                         <button
                           key={cat.slug}
                           onClick={() => updateFilters('categories', cat.slug)}
-                          className={`h-10 px-5 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 shrink-0 border cursor-pointer ${
+                          className={`h-9 px-4 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 shrink-0 border cursor-pointer ${
                             isSelected 
                               ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.25)]' 
                               : 'bg-white/5 border-white/5 text-zinc-500 hover:text-white hover:bg-white/10'
@@ -516,16 +526,16 @@ export default function DashboardClient({
 
             {(activeTab === 'history' || activeTab === 'favs') && historyStats && (
               <div className="space-y-0">
-                <div className="flex flex-col items-start">
+                <div className="flex flex-col items-start ml-0">
                   <button
                     onClick={() => setShowHistoryStats(!showHistoryStats)}
-                    className={`h-11 px-6 flex items-center gap-3 text-[10px] font-black uppercase tracking-wider transition-all duration-300 border cursor-pointer ${
+                    className={`h-9 px-4 flex items-center gap-3 text-[9px] font-black uppercase tracking-wider transition-all duration-300 border cursor-pointer ${
                       showHistoryStats 
-                        ? 'bg-purple-500/10 border-white/10 text-purple-400 rounded-t-[1.5rem] rounded-b-none border-b-0 relative z-20 translate-y-[1px]' 
+                        ? 'bg-[#0c0814] border-white/10 text-purple-400 rounded-t-[1.2rem] rounded-b-none border-b-0 relative z-20 translate-y-[1px]' 
                         : 'bg-white/5 border-white/10 text-white rounded-2xl hover:bg-white/10'
                     }`}
                   >
-                    <BarChart2 size={14} className={showHistoryStats ? 'text-purple-400 animate-pulse' : 'text-cyan-500'} />
+                    <BarChart2 size={12} className={showHistoryStats ? 'text-purple-400 animate-pulse' : 'text-cyan-500'} />
                     {showHistoryStats 
                       ? (activeTab === 'history' ? 'Ocultar Estatísticas de Leitura' : 'Ocultar Estatísticas de Favoritos')
                       : (activeTab === 'history' ? 'Ver Estatísticas de Leitura' : 'Ver Estatísticas de Favoritos')}
@@ -544,7 +554,7 @@ export default function DashboardClient({
               <NewsSkeletonGrid />
             ) : newsList.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {newsList.slice(0, (activeTab === 'home' || activeTab === 'explore') ? visibleCount : 999999).map((article, idx) => (
                     <PremiumNewsCard
                       key={article.url}
@@ -794,27 +804,27 @@ function PremiumNewsCard({ article, isFavorite, onFavorite, onClick }: any) {
   const colorClass = tagColors[category] || "bg-zinc-700";
 
   return (
-    <div className="group relative border border-white/5 bg-white/5 backdrop-blur-2xl rounded-[3rem] transition-all duration-700 flex flex-col h-full hover:border-white/20 hover:-translate-y-3 overflow-hidden cursor-pointer" onClick={onClick}>
-      <div className="relative aspect-[16/9] m-3 rounded-[2rem] overflow-hidden">
+    <div className="group relative border border-white/5 bg-white/5 backdrop-blur-2xl rounded-[1.5rem] transition-all duration-700 flex flex-col h-full hover:border-white/20 hover:-translate-y-3 overflow-hidden cursor-pointer" onClick={onClick}>
+      <div className="relative aspect-[16/9] m-2.5 rounded-[1rem] overflow-hidden">
         <img src={article.urlToImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-        <div className="absolute top-4 right-4">
-          <div className={`${colorClass} px-4 py-2 rounded-lg text-[8px] font-black uppercase text-white shadow-xl`}>{category}</div>
+        <div className="absolute top-3 right-3">
+          <div className={`${colorClass} px-3 py-1.5 rounded-md text-[7.5px] font-black uppercase text-white shadow-xl`}>{category}</div>
         </div>
       </div>
-      <div className="p-7 flex flex-col flex-1 gap-4">
-        <div className="text-[10px] text-white font-bold uppercase tracking-wider flex items-center gap-3">
+      <div className="p-5 flex flex-col flex-1 gap-3.5">
+        <div className="text-[9px] text-white/50 font-bold uppercase tracking-wider flex items-center gap-3">
           <span className="text-cyan-400">{article.source.name}</span>
           <span>{new Date(article.publishedAt).toLocaleDateString('pt-BR')}</span>
         </div>
-        <h3 className="text-[1.1rem] font-black text-white line-clamp-2">{article.title}</h3>
-        <p className="text-[13px] text-white/60 leading-relaxed line-clamp-2">{article.description}</p>
-        <div className="mt-auto pt-6 flex items-center justify-between">
-          <button className="text-[10px] font-black uppercase text-cyan-500 flex items-center gap-2">Ver Mais <ArrowRight size={14} /></button>
+        <h3 className="text-sm md:text-base font-black text-white line-clamp-2 leading-snug">{article.title}</h3>
+        <p className="text-[11px] text-white/40 leading-relaxed line-clamp-2">{article.description}</p>
+        <div className="mt-auto pt-4 flex items-center justify-between">
+          <button className="text-[9px] font-black uppercase text-cyan-500 flex items-center gap-1.5">Ver Mais <ArrowRight size={12} /></button>
           <button
             onClick={(e) => { e.stopPropagation(); onFavorite(); }}
-            className={`h-11 w-11 rounded-full flex items-center justify-center transition-all duration-500 border ${isFavorite ? "bg-purple-500/20 border-purple-500/50 text-purple-400 shadow-xl scale-110" : "bg-white/5 border-white/10 text-zinc-600 hover:text-white"}`}
+            className={`h-9 w-9 rounded-full flex items-center justify-center transition-all duration-500 border ${isFavorite ? "bg-purple-500/20 border-purple-500/50 text-purple-400 shadow-xl scale-110" : "bg-white/5 border-white/10 text-zinc-600 hover:text-white"}`}
           >
-            <BookmarkIcon size={18} fill={isFavorite ? "currentColor" : "none"} />
+            <BookmarkIcon size={14} fill={isFavorite ? "currentColor" : "none"} />
           </button>
         </div>
       </div>
@@ -901,44 +911,44 @@ function ProfileSection({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
         {/* CARD DADOS PESSOAIS */}
-        <div className="p-10 rounded-[3rem] bg-white/5 border border-white/5 space-y-8 flex flex-col justify-between">
+        <div className="p-6 md:p-8 rounded-[2rem] bg-white/5 border border-white/5 space-y-6 flex flex-col justify-between">
           <div>
-            <h3 className="text-xl font-black text-white uppercase tracking-widest italic mb-2">Dados Pessoais</h3>
+            <h3 className="text-lg font-black text-white uppercase tracking-widest italic mb-2">Dados Pessoais</h3>
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label className="text-white/60 font-black text-[10px] uppercase">Seu Nome</Label>
                 <Input
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
-                  className="bg-black/40 border-white/10 text-white h-14 rounded-2xl focus:border-cyan-500/50"
+                  className="bg-black/40 border-white/10 text-white h-12 rounded-2xl focus:border-cyan-500/50"
                   placeholder="Seu nome"
                 />
               </div>
-              <div className="pt-6 grid grid-cols-2 gap-4">
+              <div className="pt-4 grid grid-cols-2 gap-4">
                 <Button
                   type="button"
                   onClick={() => setIsChangingEmail(true)}
-                  className="w-full h-12 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-2xl border border-white/5 transition-all text-xs tracking-wider"
+                  className="w-full h-11 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-2xl border border-white/5 transition-all text-xs tracking-wider"
                 >
                   Alterar E-mail
                 </Button>
                 <Button
                   type="button"
                   onClick={() => setIsChangingPassword(true)}
-                  className="w-full h-12 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-2xl border border-white/5 transition-all text-xs tracking-wider"
+                  className="w-full h-11 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-2xl border border-white/5 transition-all text-xs tracking-wider"
                 >
                   Alterar Senha
                 </Button>
               </div>
             </div>
           </div>
-          <Button onClick={handleSavePersonalData} disabled={isSavingProfile} className="w-full h-14 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase rounded-2xl shadow-xl transition-all">Salvar Alterações</Button>
+          <Button onClick={handleSavePersonalData} disabled={isSavingProfile} className="w-full h-12 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase rounded-2xl shadow-xl transition-all">Salvar Alterações</Button>
         </div>
 
         {/* CARD INTERESSES */}
-        <div className="p-10 rounded-[3rem] bg-white/5 border border-white/5 space-y-8 flex flex-col justify-between">
+        <div className="p-6 md:p-8 rounded-[2rem] bg-white/5 border border-white/5 space-y-6 flex flex-col justify-between">
           <div>
-            <h3 className="text-xl font-black text-white uppercase tracking-widest italic mb-6">Interesses</h3>
+            <h3 className="text-lg font-black text-white uppercase tracking-widest italic mb-6">Interesses</h3>
             <div className="flex flex-wrap gap-3 items-start content-start">
               {ALL_POSSIBLE_CATEGORIES.map((cat: any) => (
                 <button
@@ -951,19 +961,19 @@ function ProfileSection({
               ))}
             </div>
           </div>
-          <Button onClick={handleSaveInterests} disabled={isSavingProfile} className="w-full h-14 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase rounded-2xl shadow-xl shadow-purple-600/10 transition-all">Atualizar Interesses</Button>
+          <Button onClick={handleSaveInterests} disabled={isSavingProfile} className="w-full h-12 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase rounded-2xl shadow-xl shadow-purple-600/10 transition-all">Atualizar Interesses</Button>
         </div>
       </div>
 
       {/* CARD ZONA DE PERIGO (LARGURA TOTAL) */}
-      <div className="p-10 rounded-[3rem] bg-red-500/5 border border-red-500/10 hover:border-red-500/20 transition-all space-y-6 flex flex-col">
-        <h3 className="text-xl font-black text-red-500 uppercase tracking-widest italic flex items-center gap-3">
+      <div className="p-6 md:p-8 rounded-[2rem] bg-red-500/5 border border-red-500/10 hover:border-red-500/20 transition-all space-y-6 flex flex-col">
+        <h3 className="text-lg font-black text-red-500 uppercase tracking-widest italic flex items-center gap-3">
           <AlertCircle size={20} className="text-red-500" />
           Zona de Perigo
         </h3>
-        <p className="text-xs text-white/40 font-bold leading-relaxed">ATENÇÃO TOTAL: Esta ação excluirá permanentemente o seu perfil, favoritos e histórico do TrackFeed de forma irreversível.</p>
+        <p className="text-[11px] text-white/40 font-bold leading-relaxed">ATENÇÃO TOTAL: Esta ação excluirá permanentemente o seu perfil, favoritos e histórico do TrackFeed de forma irreversível.</p>
         <div className="pt-2">
-          <Button onClick={() => setIsDeletingAccount(true)} className="w-full h-14 bg-red-950/20 hover:bg-red-600 text-red-500 hover:text-white font-black uppercase rounded-2xl border border-red-500/20 transition-all shadow-xl shadow-red-950/30">Excluir Conta Permanentemente</Button>
+          <Button onClick={() => setIsDeletingAccount(true)} className="w-full h-12 bg-red-950/20 hover:bg-red-600 text-red-500 hover:text-white font-black uppercase rounded-2xl border border-red-500/20 transition-all shadow-xl shadow-red-950/30">Excluir Conta Permanentemente</Button>
         </div>
       </div>
     </section>
@@ -1011,19 +1021,19 @@ function HistoryStats({ stats, isFavs }: any) {
   const total = stats.totalRead;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16 animate-in fade-in slide-in-from-top-8 duration-1000">
-      <div className="lg:col-span-2 p-10 rounded-[3rem] bg-white/5 border border-white/10 backdrop-blur-3xl space-y-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-10 animate-in fade-in slide-in-from-top-8 duration-1000">
+      <div className="lg:col-span-2 p-5 md:p-6 rounded-tr-[2rem] rounded-bl-[2rem] rounded-br-[2rem] rounded-tl-none bg-white/5 border border-white/10 backdrop-blur-3xl space-y-5">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-black text-white uppercase tracking-widest italic">Distribuição por Tópico</h3>
+          <h3 className="text-base font-black text-white uppercase tracking-widest italic">Distribuição por Tópico</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
           {categories.map(([cat, count]: any) => (
-            <div key={cat} className="space-y-2">
-              <div className="flex justify-between text-[10px] font-black uppercase">
+            <div key={cat} className="space-y-1">
+              <div className="flex justify-between text-[9px] font-black uppercase">
                 <span className="text-white/60">{cat}</span>
                 <span className="text-cyan-400">{Math.round((count / total) * 100)}%</span>
               </div>
-              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                 <div
                   className={`h-full ${tagColors[cat] || 'bg-zinc-500'} transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(6,182,212,0.5)]`}
                   style={{ width: `${(count / total) * 100}%` }}
@@ -1034,9 +1044,9 @@ function HistoryStats({ stats, isFavs }: any) {
         </div>
       </div>
 
-      <div className="rounded-[3rem] bg-gradient-to-br from-cyan-600/10 to-purple-600/5 border border-cyan-500/10 backdrop-blur-3xl p-10 flex flex-col justify-center items-center text-center space-y-2 shadow-2xl h-full">
-        <div className="text-7xl font-black text-white tracking-tighter">{stats.totalClicks}</div>
-        <div className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em]">Total de Interações</div>
+      <div className="rounded-[2rem] bg-gradient-to-br from-cyan-600/10 to-purple-600/5 border border-cyan-500/10 backdrop-blur-3xl p-5 md:p-6 flex flex-col justify-center items-center text-center space-y-1 shadow-2xl h-full">
+        <div className="text-5xl font-black text-white tracking-tighter">{stats.totalClicks}</div>
+        <div className="text-[9px] font-black text-purple-400 uppercase tracking-[0.2em]">Total de Interações</div>
       </div>
     </div>
   );

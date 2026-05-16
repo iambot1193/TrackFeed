@@ -94,7 +94,7 @@ export default async function DashboardPage({
       if (cats.includes('general')) {
         news = langFiltered;
       } else {
-        news = langFiltered.filter(article => cats.includes(article.category));
+        news = langFiltered.filter(article => cats.includes(article.category || "general"));
       }
     } else {
       news = langFiltered;
@@ -112,7 +112,7 @@ export default async function DashboardPage({
 
     const stats = {
       totalRead: historyEntries.length,
-      totalClicks: historyEntries.reduce((acc, h) => acc + (h.clickCount || 1), 0),
+      totalClicks: historyEntries.length,
       categories: {} as Record<string, number>
     };
 
@@ -132,7 +132,7 @@ export default async function DashboardPage({
           url: h.url,
           urlToImage: h.imageUrl || cached?.imageUrl || "",
           publishedAt: h.viewedAt.toISOString(),
-          source: { name: `Visto ${h.clickCount || 1}x` },
+          source: { name: cached?.source || "Radar" },
           category: cat, 
           language: cached?.language || "pt"
         } as NewsArticle);
@@ -146,7 +146,7 @@ export default async function DashboardPage({
       if (cats.includes('general')) {
         news = langFiltered;
       } else {
-        news = langFiltered.filter(article => cats.includes(article.category));
+        news = langFiltered.filter(article => cats.includes(article.category || "general"));
       }
     } else {
       news = langFiltered;
