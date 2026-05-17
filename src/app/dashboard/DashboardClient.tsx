@@ -82,12 +82,14 @@ export default function DashboardClient({
   );
   const [isPending, startTransition] = useTransition();
   const [scrolled, setScrolled] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(9);
+  const [visibleRows, setVisibleRows] = useState(3);
   const [showMainPopover, setShowMainPopover] = useState(false);
   const [showHeaderPopover, setShowHeaderPopover] = useState(false);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [gridColumns, setGridColumns] = useState<3 | 4>(3);
+  const visibleCount = visibleRows * gridColumns;
 
   // Profile state
   const [profileName, setProfileName] = useState(user.name);
@@ -155,7 +157,7 @@ export default function DashboardClient({
   useEffect(() => {
     if (currentFilters.page === 1) {
       setNewsList(initialNews);
-      setVisibleCount(9);
+      setVisibleRows(3);
     } else {
       setNewsList(prev => {
         const seen = new Set();
@@ -242,10 +244,12 @@ export default function DashboardClient({
   };
 
   const handleLoadMore = () => {
-    if (visibleCount + 6 <= newsList.length) {
-      setVisibleCount(prev => prev + 6);
+    const nextRows = visibleRows + 3;
+    const nextVisibleCount = nextRows * gridColumns;
+    if (nextVisibleCount <= newsList.length) {
+      setVisibleRows(nextRows);
     } else {
-      setVisibleCount(prev => prev + 6);
+      setVisibleRows(nextRows);
       updateFilters('page', currentFilters.page + 1);
     }
   };
@@ -472,28 +476,65 @@ export default function DashboardClient({
                 </h1>
               </div>
 
-              <div className="relative pb-1" ref={mainPopoverRef}>
+              <div className="flex items-center gap-3 pb-1">
+                {/* Botão Premium de Alternar Grid (3 vs 4 Colunas) */}
                 <button
-                  onClick={() => {
-                    const next = !showMainPopover;
-                    setShowMainPopover(next);
-                    if (next) setShowHeaderPopover(false);
-                  }}
-                  className={`h-12 px-6 rounded-2xl flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl ${showMainPopover ? 'bg-cyan-600 border-cyan-500 text-white' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-                    }`}
+                  onClick={() => setGridColumns(prev => prev === 3 ? 4 : 3)}
+                  title={gridColumns === 3 ? "Mudar para visualização compacta (4 colunas)" : "Mudar para visualização padrão (3 colunas)"}
+                  className="h-12 w-12 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white flex items-center justify-center transition-all shadow-xl active:scale-95 group relative overflow-hidden cursor-pointer"
                 >
-                  <Filter size={16} className={showMainPopover ? 'text-white' : 'text-cyan-500'} />
-                  Linguagem & Filtros
+                  <div className="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="z-10 transition-transform duration-300 group-hover:scale-110 flex items-center justify-center">
+                    {gridColumns === 3 ? (
+                      <svg width="30" height="30" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-cyan-500">
+                        <rect x="1.5" y="1.5" width="4" height="4" rx="1.2" fill="currentColor" />
+                        <rect x="8" y="1.5" width="4" height="4" rx="1.2" fill="currentColor" />
+                        <rect x="14.5" y="1.5" width="4" height="4" rx="1.2" fill="currentColor" />
+                        <rect x="1.5" y="8" width="4" height="4" rx="1.2" fill="currentColor" />
+                        <rect x="8" y="8" width="4" height="4" rx="1.2" fill="currentColor" />
+                        <rect x="14.5" y="8" width="4" height="4" rx="1.2" fill="currentColor" />
+                        <rect x="1.5" y="14.5" width="4" height="4" rx="1.2" fill="currentColor" />
+                        <rect x="8" y="14.5" width="4" height="4" rx="1.2" fill="currentColor" />
+                        <rect x="14.5" y="14.5" width="4" height="4" rx="1.2" fill="currentColor" />
+                      </svg>
+                    ) : (
+                      <svg width="32" height="24" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-purple-400">
+                        <rect x="1.5" y="2" width="3.5" height="3.5" rx="1" fill="currentColor" />
+                        <rect x="6.5" y="2" width="3.5" height="3.5" rx="1" fill="currentColor" />
+                        <rect x="11.5" y="2" width="3.5" height="3.5" rx="1" fill="currentColor" />
+                        <rect x="16.5" y="2" width="3.5" height="3.5" rx="1" fill="currentColor" />
+                        <rect x="1.5" y="9.5" width="3.5" height="3.5" rx="1" fill="currentColor" />
+                        <rect x="6.5" y="9.5" width="3.5" height="3.5" rx="1" fill="currentColor" />
+                        <rect x="11.5" y="9.5" width="3.5" height="3.5" rx="1" fill="currentColor" />
+                        <rect x="16.5" y="9.5" width="3.5" height="3.5" rx="1" fill="currentColor" />
+                      </svg>
+                    )}
+                  </div>
                 </button>
-                {showMainPopover && (
-                  <FilterPopover
-                    categories={ALL_POSSIBLE_CATEGORIES}
-                    selected={localCategories}
-                    onUpdate={(cat: any) => updateFilters('categories', cat)}
-                    selectedLang={localLangs}
-                    onUpdateLang={(lang: any) => updateFilters('lang', lang)}
-                  />
-                )}
+
+                <div className="relative" ref={mainPopoverRef}>
+                  <button
+                    onClick={() => {
+                      const next = !showMainPopover;
+                      setShowMainPopover(next);
+                      if (next) setShowHeaderPopover(false);
+                    }}
+                    className={`h-12 px-6 rounded-2xl flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl ${showMainPopover ? 'bg-cyan-600 border-cyan-500 text-white' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                      }`}
+                  >
+                    <Filter size={16} className={showMainPopover ? 'text-white' : 'text-cyan-500'} />
+                    Linguagem & Filtros
+                  </button>
+                  {showMainPopover && (
+                    <FilterPopover
+                      categories={ALL_POSSIBLE_CATEGORIES}
+                      selected={localCategories}
+                      onUpdate={(cat: any) => updateFilters('categories', cat)}
+                      selectedLang={localLangs}
+                      onUpdateLang={(lang: any) => updateFilters('lang', lang)}
+                    />
+                  )}
+                </div>
               </div>
             </header>
 
@@ -588,7 +629,7 @@ export default function DashboardClient({
 
             {newsList.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className={`grid grid-cols-1 md:grid-cols-2 ${gridColumns === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-6`}>
                   {newsList.slice(0, (activeTab === 'home' || activeTab === 'explore') ? visibleCount : 999999).map((article, idx) => (
                     <PremiumNewsCard
                       key={article.url}
@@ -596,6 +637,7 @@ export default function DashboardClient({
                       isFavorite={favorites.includes(article.url)}
                       onFavorite={() => handleFavorite(article)}
                       onClick={() => handleArticleClick(article)}
+                      gridColumns={gridColumns}
                     />
                   ))}
                 </div>
@@ -621,7 +663,7 @@ export default function DashboardClient({
                 )}
               </>
             ) : isPending ? (
-              <NewsSkeletonGrid />
+              <NewsSkeletonGrid gridColumns={gridColumns} />
             ) : (
               <EmptyState title="Nenhuma notícia encontrada" description="Tente ajustar seus filtros ou pesquisar por outro termo." />
             )}
@@ -842,27 +884,27 @@ export default function DashboardClient({
 
 // Sub-componentes auxiliares (Temporários aqui para garantir funcionamento)
 
-function PremiumNewsCard({ article, isFavorite, onFavorite, onClick }: any) {
+function PremiumNewsCard({ article, isFavorite, onFavorite, onClick, gridColumns }: any) {
   const category = article.category || "general";
   const colorClass = tagColors[category] || "bg-zinc-700";
 
   return (
     <div className="group relative border border-white/5 bg-white/5 backdrop-blur-2xl rounded-[1.5rem] transition-all duration-700 flex flex-col h-full hover:border-white/20 hover:-translate-y-3 overflow-hidden cursor-pointer" onClick={onClick}>
-      <div className="relative aspect-[16/9] m-2.5 rounded-[1rem] overflow-hidden">
+      <div className={`relative aspect-[16/9] ${gridColumns === 4 ? 'm-2 rounded-[0.9rem]' : 'm-2.5 rounded-[1rem]'} overflow-hidden`}>
         <img src={article.urlToImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
         <div className="absolute top-3 right-3">
           <div className={`${colorClass} px-3 py-1.5 rounded-md text-[7.5px] font-black uppercase text-white shadow-xl`}>{category}</div>
         </div>
       </div>
-      <div className="p-5 flex flex-col flex-1 gap-3.5">
+      <div className={`flex flex-col flex-1 ${gridColumns === 4 ? 'p-4 gap-2.5' : 'p-5 gap-3.5'}`}>
         <div className="text-[9px] text-white/50 font-bold uppercase tracking-wider flex items-center gap-3">
           <span className="text-cyan-400">{article.source.name}</span>
           <span>{new Date(article.publishedAt).toLocaleDateString('pt-BR')}</span>
         </div>
-        <h3 className="text-sm md:text-base font-black text-white line-clamp-2 leading-snug">{article.title}</h3>
-        <p className="text-[11px] text-white/40 leading-relaxed line-clamp-2">{article.description}</p>
+        <h3 className={`font-black text-white line-clamp-2 leading-snug ${gridColumns === 4 ? 'text-xs md:text-sm' : 'text-sm md:text-base'}`}>{article.title}</h3>
+        <p className={`leading-relaxed line-clamp-2 ${gridColumns === 4 ? 'text-[10px] text-white/30' : 'text-[11px] text-white/40'}`}>{article.description}</p>
         <div className="mt-auto pt-4 flex items-center justify-between">
-          <button className="text-[9px] font-black uppercase text-cyan-500 flex items-center gap-1.5">Ver Mais <ArrowRight size={12} /></button>
+          <button className={`font-black uppercase text-cyan-500 flex items-center gap-1.5 ${gridColumns === 4 ? 'text-[8px]' : 'text-[9px]'}`}>Ver Mais <ArrowRight size={12} /></button>
           <button
             onClick={(e) => { e.stopPropagation(); onFavorite(); }}
             className={`h-9 w-9 rounded-full flex items-center justify-center transition-all duration-500 border ${isFavorite ? "bg-purple-500/20 border-purple-500/50 text-purple-400 shadow-xl scale-110" : "bg-white/5 border-white/10 text-zinc-600 hover:text-white"}`}
@@ -1024,9 +1066,9 @@ function ProfileSection({
   );
 }
 
-function NewsSkeletonGrid() {
+function NewsSkeletonGrid({ gridColumns }: { gridColumns: number }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
+    <div className={`grid grid-cols-1 md:grid-cols-2 ${gridColumns === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-8 animate-in fade-in duration-500`}>
       {[...Array(6)].map((_, i) => (
         <div 
           key={i} 

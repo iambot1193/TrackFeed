@@ -424,7 +424,6 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
       await cacheArticles(finalArticles, lang);
     }
 
-    /*
     if (finalArticles.length < 9) {
       const fourMonthsAgo = new Date(Date.now() - 120 * 24 * 60 * 60 * 1000);
       const thematicBackup = await prisma.cachedArticle.findMany({
@@ -440,7 +439,6 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
       }
       finalArticles = dedup(finalArticles);
     }
-    */
     return finalArticles.slice(0, Math.max(12, TARGET_SIZE));
   } catch (error) { return []; }
 }

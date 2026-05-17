@@ -2,7 +2,7 @@
 
 O **TrackFeed** é um dashboard de notícias de última geração, projetado para oferecer uma experiência cinematográfica e inteligente de consumo de informação. Ele combina o poder do **Next.js 15**, **Prisma** e **Google Gemini AI** para categorizar, resumir e apresentar notícias com uma interface "Cyber-Glass" de altíssima fidelidade.
 
-![TrackFeed Preview](https://github.com/user-attachments/assets/your-preview-link)
+![TrackFeed Preview](https://github.com/iambot1193/TrackFeed/blob/main/public/preview.png)
 
 ## ✨ Funcionalidades "State-of-the-Art"
 
@@ -30,8 +30,8 @@ O **TrackFeed** é um dashboard de notícias de última geração, projetado par
 
 ### 1. Clone o repositório
 ```bash
-git clone https://github.com/seu-usuario/track2feed.git
-cd track2feed
+git clone https://github.com/iambot1193/TrackFeed.git
+cd TrackFeed
 ```
 
 ### 2. Instale as dependências
