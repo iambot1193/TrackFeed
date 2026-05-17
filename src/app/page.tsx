@@ -108,7 +108,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {process.env.NODE_ENV === "production" && (
+            {process.env.NODE_ENV === "production" && SITE_KEY && (
               <div className="flex justify-center py-1.5 scale-90 select-none overflow-hidden rounded-xl bg-black/40 p-3 border border-white/5">
                 <ReCAPTCHA sitekey={SITE_KEY} onChange={(token) => setCaptchaToken(token)} theme="dark" />
                 <input type="hidden" name="g-recaptcha-response" value={captchaToken || ""} />
@@ -117,7 +117,7 @@ export default function LoginPage() {
 
             <Button 
               type="submit" 
-              disabled={isPending || (process.env.NODE_ENV === "production" && !captchaToken)}
+              disabled={isPending || (process.env.NODE_ENV === "production" && SITE_KEY && !captchaToken)}
               className="w-full h-12 bg-white text-black hover:bg-purple-600 hover:text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 rounded-xl group overflow-hidden"
             >
               {isPending ? (
