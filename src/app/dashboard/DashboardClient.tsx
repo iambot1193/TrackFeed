@@ -539,7 +539,7 @@ export default function DashboardClient({
             </header>
 
             {/* AVISO DE COTAS ESTOURADAS (Luxury Cyber-Glass Red Warning) */}
-            {!dismissedAlert && (apiStatus?.newsApiRemaining <= 0 || apiStatus?.gnewsQuota <= 0) && (
+            {!dismissedAlert && (apiStatus?.newsApiRemaining <= 0 && apiStatus?.gnewsQuota <= 0) && (
               <div className="relative overflow-hidden p-6 rounded-[2rem] border border-red-500/30 bg-gradient-to-r from-red-950/20 to-purple-950/15 backdrop-blur-3xl animate-in fade-in slide-in-from-top-6 duration-500 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_20px_50px_rgba(239,68,68,0.1)]">
                 {/* Nebula Aura Backdrops */}
                 <div className="absolute top-0 left-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl pointer-events-none" />
