@@ -58,78 +58,78 @@ export default function RegisterPage() {
         <ThemeToggle />
       </div>
 
-      <Card className="w-full max-w-[480px] border-white/5 bg-white/[0.03] backdrop-blur-[60px] text-foreground relative z-10 shadow-[0_80px_150px_-30px_rgba(0,0,0,1)] rounded-[3.5rem] overflow-hidden border-t-white/10 p-2">
-        <div className="bg-black/20 rounded-[inherit] p-8 lg:p-10">
-          <CardHeader className="space-y-6 text-center pt-4 pb-10">
+      <Card className="w-full max-w-[420px] border-white/5 bg-white/[0.03] backdrop-blur-[60px] text-foreground relative z-10 shadow-[0_80px_150px_-30px_rgba(0,0,0,1)] rounded-[2.5rem] overflow-hidden border-t-white/10 p-1.5">
+        <div className="bg-black/20 rounded-[inherit] p-6 lg:p-8">
+          <CardHeader className="space-y-4 text-center pt-2 pb-5">
             <div className="flex justify-center">
-              <div className="h-20 w-20 rounded-[2rem] bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center font-black text-2xl text-white shadow-[0_0_50px_rgba(147,51,234,0.4)]">
+              <div className="h-14 w-14 rounded-[1.25rem] bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center font-black text-lg text-white shadow-[0_0_30px_rgba(147,51,234,0.3)]">
                 TF
               </div>
             </div>
-            <div className="space-y-2">
-              <CardTitle className="text-5xl font-black tracking-tighter uppercase italic text-white">TrackFeed</CardTitle>
-              <CardDescription className="text-zinc-500 font-black uppercase text-[10px] tracking-[0.4em] bg-white/5 py-1.5 rounded-full border border-white/5 px-6 inline-block mx-auto">
+            <div className="space-y-1">
+              <CardTitle className="text-3xl font-black tracking-tighter uppercase italic text-white">TrackFeed</CardTitle>
+              <CardDescription className="text-zinc-500 font-black uppercase text-[8px] tracking-[0.3em] bg-white/5 py-1 rounded-full border border-white/5 px-4 inline-block mx-auto">
                 Crie sua conta para começar
               </CardDescription>
             </div>
             
             {/* INFORMATIVO DE VERIFICAÇÃO */}
-            <div className="mt-4 p-5 bg-purple-500/5 border border-purple-500/10 rounded-[2rem] flex items-center gap-5 animate-in fade-in slide-in-from-top-2 duration-1000">
-              <div className="h-12 w-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400 shrink-0">
-                <ShieldCheck size={24} />
+            <div className="mt-2 p-4 bg-purple-500/5 border border-purple-500/10 rounded-[1.5rem] flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-1000">
+              <div className="h-10 w-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 shrink-0">
+                <ShieldCheck size={20} />
               </div>
               <div className="text-left">
-                <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest leading-none mb-2 italic">Benefício exclusivo</p>
-                <p className="text-[11px] text-zinc-400 font-bold leading-tight">Ganhe o selo de <span className="text-white">Conta Verificada</span> após confirmar seu e-mail.</p>
+                <p className="text-[8px] font-black text-purple-400 uppercase tracking-widest leading-none mb-1 italic">Benefício exclusivo</p>
+                <p className="text-[10px] text-zinc-400 font-bold leading-tight">Ganhe o selo de <span className="text-white">Conta Verificada</span> após confirmar seu e-mail.</p>
               </div>
             </div>
           </CardHeader>
           
-          <form action={formAction} className="space-y-6 px-2">
+          <form action={formAction} className="space-y-4 px-1">
             {state?.error && (
-              <div className="flex items-center gap-4 p-5 text-[10px] font-black uppercase tracking-widest text-red-400 bg-red-500/10 border border-red-500/20 rounded-2xl animate-in fade-in slide-in-from-top-4 italic">
-                <AlertCircle size={18} />
+              <div className="flex items-center gap-3 p-4 text-[9px] font-black uppercase tracking-widest text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl animate-in fade-in slide-in-from-top-4 italic">
+                <AlertCircle size={16} />
                 {state.error}
               </div>
             )}
 
-            <div className="space-y-3 group">
-              <Label className="text-zinc-500 font-black uppercase text-[9px] tracking-[0.3em] px-2 group-focus-within:text-purple-400 transition-all">Usuário</Label>
+            <div className="space-y-2 group">
+              <Label className="text-zinc-500 font-black uppercase text-[8px] tracking-[0.2em] px-2 group-focus-within:text-purple-400 transition-all">Usuário</Label>
               <Input 
                 id="name" name="name" type="text" 
                 defaultValue={state?.name || ""}
                 placeholder="Como quer ser chamado?" required 
-                className="h-16 bg-white/[0.03] border-white/5 text-white focus-visible:ring-purple-500/30 rounded-2xl text-sm font-bold placeholder:text-zinc-700 transition-all shadow-inner px-6" 
+                className="h-12 bg-white/[0.03] border-white/5 text-white focus-visible:ring-purple-500/30 rounded-xl text-xs font-bold placeholder:text-zinc-700 transition-all shadow-inner px-4" 
               />
             </div>
 
-            <div className="space-y-3 group">
-              <Label className="text-zinc-500 font-black uppercase text-[9px] tracking-[0.3em] px-2 group-focus-within:text-purple-400 transition-all">E-mail</Label>
+            <div className="space-y-2 group">
+              <Label className="text-zinc-500 font-black uppercase text-[8px] tracking-[0.2em] px-2 group-focus-within:text-purple-400 transition-all">E-mail</Label>
               <Input 
                 id="email" name="email" type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nome@exemplo.com" required 
-                className="h-16 bg-white/[0.03] border-white/5 text-white focus-visible:ring-purple-500/30 rounded-2xl text-sm font-bold placeholder:text-zinc-700 transition-all shadow-inner px-6" 
+                className="h-12 bg-white/[0.03] border-white/5 text-white focus-visible:ring-purple-500/30 rounded-xl text-xs font-bold placeholder:text-zinc-700 transition-all shadow-inner px-4" 
               />
             </div>
             
-            <div className="space-y-3 group">
-              <Label className="text-zinc-500 font-black uppercase text-[9px] tracking-[0.3em] px-2 group-focus-within:text-purple-400 transition-all">Segurança</Label>
+            <div className="space-y-2 group">
+              <Label className="text-zinc-500 font-black uppercase text-[8px] tracking-[0.2em] px-2 group-focus-within:text-purple-400 transition-all">Segurança</Label>
               <div className="relative">
                 <Input 
                   id="password" name="password" type={showPassword ? "text" : "password"} required
                   placeholder="Senha"
-                  className="peer h-16 bg-white/[0.03] border-white/5 text-white focus-visible:ring-purple-500/30 pr-14 rounded-2xl text-sm font-bold placeholder:text-zinc-700 transition-all shadow-inner px-6" 
+                  className="peer h-12 bg-white/[0.03] border-white/5 text-white focus-visible:ring-purple-500/30 pr-12 rounded-xl text-xs font-bold placeholder:text-zinc-700 transition-all shadow-inner px-4" 
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-all active:scale-90 outline-none p-1">
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-all active:scale-90 outline-none p-1">
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
             {process.env.NODE_ENV === "production" && (
-              <div className="flex justify-center py-2 scale-90 select-none overflow-hidden rounded-2xl bg-black/40 p-4 border border-white/5">
+              <div className="flex justify-center py-1.5 scale-90 select-none overflow-hidden rounded-xl bg-black/40 p-3 border border-white/5">
                 <ReCAPTCHA sitekey={SITE_KEY} onChange={(token) => setCaptchaToken(token)} theme="dark" />
                 <input type="hidden" name="g-recaptcha-response" value={captchaToken || ""} />
               </div>
@@ -138,19 +138,19 @@ export default function RegisterPage() {
             <Button 
               type="submit" 
               disabled={isPending || (process.env.NODE_ENV === "production" && !captchaToken)}
-              className="w-full h-16 bg-white text-black hover:bg-purple-600 hover:text-white font-black uppercase text-[12px] tracking-[0.3em] shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 rounded-2xl group overflow-hidden mt-4"
+              className="w-full h-12 bg-white text-black hover:bg-purple-600 hover:text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 rounded-xl group overflow-hidden mt-2"
             >
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <span>{isPending ? "Criando..." : "Finalizar Cadastro"}</span>
-                <ArrowRight size={18} className="transition-transform group-hover:translate-x-2" />
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
               </div>
             </Button>
           </form>
 
-          <CardFooter className="flex flex-col space-y-4 text-center mt-12 pt-8 border-t border-white/5 px-0 pb-4">
-            <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">
+          <CardFooter className="flex flex-col space-y-3 text-center mt-6 pt-4 border-t border-white/5 px-0 pb-2">
+            <p className="text-zinc-500 text-[9px] font-black uppercase tracking-[0.15em]">
               Já tem uma conta?{" "}
-              <Link href="/" className="text-white hover:text-purple-400 font-black transition-all hover:underline underline-offset-8">
+              <Link href="/" className="text-white hover:text-purple-400 font-black transition-all hover:underline underline-offset-4">
                 Fazer Login
               </Link>
             </p>

@@ -28,20 +28,26 @@ const ALL_POSSIBLE_CATEGORIES = [
   { slug: 'general', label: 'Geral' },
   { slug: 'technology', label: 'Tecnologia' },
   { slug: 'business', label: 'Negócios' },
-  { slug: 'entertainment', label: 'Entretenimento' },
   { slug: 'health', label: 'Saúde' },
   { slug: 'science', label: 'Ciência' },
-  { slug: 'sports', label: 'Esportes' }
+  { slug: 'sports', label: 'Esportes' },
+  { slug: 'games', label: 'Games' },
+  { slug: 'crypto', label: 'Cripto' },
+  { slug: 'movies', label: 'Cinema' },
+  { slug: 'music', label: 'Música' }
 ];
 
 const tagColors: any = {
   general: 'bg-zinc-500',
   technology: 'bg-cyan-500',
-  business: 'bg-blue-500',
-  entertainment: 'bg-purple-500',
-  health: 'bg-green-500',
-  science: 'bg-amber-500',
-  sports: 'bg-orange-500'
+  business: 'bg-emerald-500',
+  health: 'bg-red-500',
+  science: 'bg-purple-500',
+  sports: 'bg-orange-500',
+  games: 'bg-green-500',
+  crypto: 'bg-yellow-500',
+  movies: 'bg-rose-500',
+  music: 'bg-indigo-500'
 };
 
 export default function DashboardClient({
@@ -191,7 +197,7 @@ export default function DashboardClient({
           : [...filteredCurrent, value];
 
         // Se TODAS as categorias específicas (ou todos os interesses do usuário) forem ativadas, colapsa para 'general'
-        const allSpecificSlugs = ['technology', 'business', 'entertainment', 'health', 'science', 'sports'];
+        const allSpecificSlugs = ['technology', 'business', 'health', 'science', 'sports', 'games', 'crypto', 'movies', 'music'];
         const userSpecificInterests = profileCategories.filter(c => c !== 'general');
 
         const hasAllGlobal = allSpecificSlugs.every(slug => updated.includes(slug));
@@ -884,84 +890,85 @@ function ProfileSection({
         accept="image/*"
         className="hidden"
       />
-      <div className="flex items-center gap-8 p-12 rounded-[3.5rem] bg-white/5 border border-white/5 backdrop-blur-2xl relative overflow-hidden group">
+      <div className="flex items-center gap-6 p-8 rounded-[2.5rem] bg-white/5 border border-white/5 backdrop-blur-2xl relative overflow-hidden group">
         <div
           onClick={handleAvatarClick}
-          className="h-32 w-32 rounded-[2.5rem] bg-zinc-900 flex items-center justify-center overflow-hidden border-2 border-cyan-500/20 shadow-2xl cursor-pointer relative group/avatar transition-all duration-500 hover:border-cyan-500 hover:scale-105"
+          className="h-24 w-24 rounded-[2rem] bg-zinc-900 flex items-center justify-center overflow-hidden border border-cyan-500/20 shadow-2xl cursor-pointer relative group/avatar transition-all duration-500 hover:border-cyan-500 hover:scale-105"
         >
           {profileAvatarUrl ? (
             <img src={profileAvatarUrl} className="w-full h-full object-cover transition-opacity group-hover/avatar:opacity-40" onError={(e: any) => e.target.style.display = 'none'} />
           ) : (
-            <span className="text-white text-3xl font-black group-hover/avatar:opacity-40">{user.name.substring(0, 2)}</span>
+            <span className="text-white text-2xl font-black group-hover/avatar:opacity-40">{user.name.substring(0, 2)}</span>
           )}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
-            <Camera size={24} className="text-cyan-400" />
+            <Camera size={20} className="text-cyan-400" />
           </div>
         </div>
         <div className="flex-1">
-          <h2 className="text-4xl font-black text-white tracking-tighter">{user.name}</h2>
-          <div className="flex items-center gap-3 text-cyan-500 text-sm font-bold uppercase tracking-widest mt-2">
-            <ShieldCheck size={16} /> Conta Verificada
+          <h2 className="text-3xl font-black text-white tracking-tighter">{user.name}</h2>
+          <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-black uppercase tracking-widest mt-1.5">
+            <AlertCircle size={12} className="text-cyan-500/80" /> 
+            Verificação disponível apenas no modo de deploy
           </div>
         </div>
-        <div className="flex gap-4">
-          <Button onClick={logout} className="bg-white/5 hover:bg-white/10 text-white h-16 w-16 rounded-2xl transition-all border border-white/5 shadow-lg"><LogOut size={24} /></Button>
+        <div>
+          <Button onClick={logout} className="bg-white/5 hover:bg-white/10 text-white h-12 w-12 rounded-xl transition-all border border-white/5 shadow-lg flex items-center justify-center"><LogOut size={20} /></Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
         {/* CARD DADOS PESSOAIS */}
-        <div className="p-6 md:p-8 rounded-[2rem] bg-white/5 border border-white/5 space-y-6 flex flex-col justify-between">
+        <div className="p-5 md:p-6 rounded-[2rem] bg-white/5 border border-white/5 space-y-4 flex flex-col justify-between">
           <div>
-            <h3 className="text-lg font-black text-white uppercase tracking-widest italic mb-2">Dados Pessoais</h3>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label className="text-white/60 font-black text-[10px] uppercase">Seu Nome</Label>
+            <h3 className="text-base font-black text-white uppercase tracking-widest italic mb-2">Dados Pessoais</h3>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-white/60 font-black text-[9px] uppercase tracking-wider">Seu Nome</Label>
                 <Input
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
-                  className="bg-black/40 border-white/10 text-white h-12 rounded-2xl focus:border-cyan-500/50"
+                  className="bg-black/40 border-white/10 text-white h-10 rounded-xl focus:border-cyan-500/50 text-sm"
                   placeholder="Seu nome"
                 />
               </div>
-              <div className="pt-4 grid grid-cols-2 gap-4">
+              <div className="pt-2 grid grid-cols-2 gap-3">
                 <Button
                   type="button"
                   onClick={() => setIsChangingEmail(true)}
-                  className="w-full h-11 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-2xl border border-white/5 transition-all text-xs tracking-wider"
+                  className="w-full h-9 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-xl border border-white/5 transition-all text-[10px] tracking-wider"
                 >
                   Alterar E-mail
                 </Button>
                 <Button
                   type="button"
                   onClick={() => setIsChangingPassword(true)}
-                  className="w-full h-11 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-2xl border border-white/5 transition-all text-xs tracking-wider"
+                  className="w-full h-9 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-xl border border-white/5 transition-all text-[10px] tracking-wider"
                 >
                   Alterar Senha
                 </Button>
               </div>
             </div>
           </div>
-          <Button onClick={handleSavePersonalData} disabled={isSavingProfile} className="w-full h-12 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase rounded-2xl shadow-xl transition-all">Salvar Alterações</Button>
+          <Button onClick={handleSavePersonalData} disabled={isSavingProfile} className="w-full h-10 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase rounded-xl shadow-xl transition-all text-xs tracking-widest mt-4">Salvar Alterações</Button>
         </div>
 
         {/* CARD INTERESSES */}
-        <div className="p-6 md:p-8 rounded-[2rem] bg-white/5 border border-white/5 space-y-6 flex flex-col justify-between">
+        <div className="p-5 md:p-6 rounded-[2rem] bg-white/5 border border-white/5 space-y-4 flex flex-col justify-between">
           <div>
-            <h3 className="text-lg font-black text-white uppercase tracking-widest italic mb-6">Interesses</h3>
-            <div className="flex flex-wrap gap-3 items-start content-start">
+            <h3 className="text-base font-black text-white uppercase tracking-widest italic mb-4">Interesses</h3>
+            <div className="flex flex-wrap gap-2 items-start content-start">
               {ALL_POSSIBLE_CATEGORIES.map((cat: any) => (
                 <button
                   key={cat.slug}
                   onClick={() => setProfileCategories((p: any) => p.includes(cat.slug) ? p.filter((c: any) => c !== cat.slug) : [...p, cat.slug])}
-                  className={`px-5 py-3 rounded-2xl text-xs font-black uppercase border transition-all ${profileCategories.includes(cat.slug) ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-xl' : 'bg-white/5 border-white/5 text-zinc-600 hover:text-white'}`}
+                  className={`px-3.5 py-2 rounded-xl text-[10px] font-black uppercase border transition-all ${profileCategories.includes(cat.slug) ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-xl' : 'bg-white/5 border-white/5 text-zinc-600 hover:text-white'}`}
                 >
                   {cat.label}
                 </button>
               ))}
             </div>
           </div>
-          <Button onClick={handleSaveInterests} disabled={isSavingProfile} className="w-full h-12 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase rounded-2xl shadow-xl shadow-purple-600/10 transition-all">Atualizar Interesses</Button>
+          <Button onClick={handleSaveInterests} disabled={isSavingProfile} className="w-full h-10 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase rounded-xl shadow-xl shadow-purple-600/10 transition-all text-xs tracking-widest mt-4">Atualizar Interesses</Button>
         </div>
       </div>
 

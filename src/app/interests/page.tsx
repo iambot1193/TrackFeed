@@ -80,27 +80,27 @@ export default function InterestsPage() {
         </div>
       </div>
 
-      <header className="p-8 lg:p-12 flex items-center justify-between relative z-50">
-        <div className="flex items-center gap-4 group cursor-pointer">
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-black text-white shadow-2xl transition-transform group-hover:scale-110">
+      <header className="p-6 lg:p-8 flex items-center justify-between relative z-50">
+        <div className="flex items-center gap-3 group cursor-pointer">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-black text-white shadow-2xl transition-transform group-hover:scale-110">
             TF
           </div>
-          <span className="text-2xl font-black italic tracking-tighter text-white">TrackFeed</span>
+          <span className="text-xl font-black italic tracking-tighter text-white">TrackFeed</span>
         </div>
       </header>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full p-8 relative z-10">
-        <div className="space-y-12 -mt-16 mb-20 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 px-4">
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[1.3] text-white italic py-8">
+      <main className="flex-1 max-w-5xl mx-auto w-full p-6 relative z-10 -mt-14 lg:-mt-22">
+        <div className="space-y-3 -mt-4 mb-6 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 px-4">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter leading-[1.2] text-white italic py-4">
             O que te desperta <br/>
-            <span className="text-glow bg-gradient-to-br from-purple-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent px-4">curiosidade?</span>
+            <span className="text-glow bg-gradient-to-br from-purple-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent px-2">curiosidade?</span>
           </h1>
-          <p className="text-zinc-500 text-xl font-medium max-w-2xl mx-auto leading-relaxed">
+          <p className="text-zinc-500 text-sm font-medium max-w-lg mx-auto leading-relaxed">
             Personalize sua inteligência. Escolha até 5 temas para nutrir seu feed imersivo.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {categories.map((cat, idx) => {
             const isSelected = selected.includes(cat.id);
             const Icon = cat.icon;
@@ -110,7 +110,7 @@ export default function InterestsPage() {
               <Card
                 key={cat.id}
                 onClick={() => toggleCategory(cat.id)}
-                className={`group relative overflow-hidden cursor-pointer border backdrop-blur-2xl transition-all duration-700 h-48 flex flex-col items-center justify-center gap-6 rounded-[3rem] animate-in fade-in slide-in-from-bottom-12 duration-1000 ${
+                className={`group relative overflow-hidden cursor-pointer border backdrop-blur-2xl transition-all duration-700 h-28 flex flex-col items-center justify-center gap-2 rounded-[1.5rem] animate-in fade-in slide-in-from-bottom-12 duration-1000 ${
                   isSelected 
                     ? `${style.border} ${style.bg} ${style.shadow} scale-105 border-opacity-50` 
                     : "border-white/5 bg-white/5 hover:border-white/20 hover:bg-white/[0.08]"
@@ -118,14 +118,14 @@ export default function InterestsPage() {
                 style={{ animationDelay: `${idx * 50}ms` }}
               >
                 {isSelected && (
-                  <div className={`absolute top-6 right-6 ${style.text} animate-in zoom-in duration-500`}>
-                    <Check size={20} strokeWidth={4} />
+                  <div className={`absolute top-2.5 right-2.5 ${style.text} animate-in zoom-in duration-500`}>
+                    <Check size={12} strokeWidth={4} />
                   </div>
                 )}
-                <div className={`p-5 rounded-2xl transition-all duration-700 ${isSelected ? `scale-110 ${style.text}` : "text-zinc-600 group-hover:text-zinc-300 bg-white/5"}`}>
-                  <Icon size={44} strokeWidth={isSelected ? 2.5 : 2} />
+                <div className={`p-2.5 rounded-xl transition-all duration-700 ${isSelected ? `scale-110 ${style.text}` : "text-zinc-600 group-hover:text-zinc-300 bg-white/5"}`}>
+                  <Icon size={20} strokeWidth={isSelected ? 2.5 : 2} />
                 </div>
-                <span className={`text-[10px] font-black uppercase tracking-[0.4em] transition-all duration-700 ${isSelected ? "text-white" : "text-zinc-600 group-hover:text-zinc-400"} leading-loose`}>
+                <span className={`text-[8px] font-black uppercase tracking-[0.3em] transition-all duration-700 ${isSelected ? "text-white" : "text-zinc-600 group-hover:text-zinc-400"} leading-loose`}>
                   {cat.label}
                 </span>
               </Card>
@@ -133,38 +133,38 @@ export default function InterestsPage() {
           })}
         </div>
 
-        <div className="mt-28 flex flex-col items-center gap-8 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
-          <div className="flex items-center gap-4">
-             <div className="h-[1px] w-16 bg-white/20" />
-             <span className="text-[11px] font-black uppercase tracking-[0.5em] text-zinc-300">
+        <div className="mt-6 flex flex-col items-center gap-3 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
+          <div className="flex items-center gap-2">
+             <div className="h-[1px] w-10 bg-white/20" />
+             <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-300">
                {selected.length} / 5 Selecionados
              </span>
-             <div className="h-[1px] w-16 bg-white/20" />
+             <div className="h-[1px] w-10 bg-white/20" />
           </div>
 
           <Button 
             onClick={handleContinue}
             disabled={selected.length < 1 || selected.length > 5 || isPending}
-            className={`h-24 min-w-[450px] rounded-[3rem] font-black uppercase text-[12px] tracking-[0.4em] transition-all duration-700 shadow-2xl active:scale-95 group relative overflow-hidden ${
+            className={`h-12 min-w-[320px] rounded-[1.5rem] font-black uppercase text-[10px] tracking-[0.3em] transition-all duration-700 shadow-2xl active:scale-95 group relative overflow-hidden ${
               selected.length >= 1 
                 ? "bg-white text-black hover:bg-cyan-500 hover:text-white scale-105" 
                 : "bg-white/5 text-zinc-600 border border-white/5 cursor-not-allowed"
             }`}
           >
             {isPending ? (
-              <div className="flex items-center gap-4">
-                <Loader2 className="animate-spin" size={24} />
+              <div className="flex items-center gap-2">
+                <Loader2 className="animate-spin" size={16} />
                 <span>Calibrando...</span>
               </div>
             ) : (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <span>Finalizar Escolha</span>
-                <ArrowRight size={20} className="transition-transform group-hover:translate-x-2" />
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
               </div>
             )}
           </Button>
           
-          <p className={`text-[10px] font-black uppercase tracking-[0.3em] transition-all duration-700 ${selected.length < 1 ? "text-cyan-500 animate-pulse" : "text-zinc-300"}`}>
+          <p className={`text-[8px] font-black uppercase tracking-[0.25em] transition-all duration-700 ${selected.length < 1 ? "text-cyan-500 animate-pulse" : "text-zinc-300"}`}>
             {selected.length < 1 ? "⚠️ Escolha ao menos 1 tópico" : "Tudo pronto para começar sua leitura"}
           </p>
         </div>
