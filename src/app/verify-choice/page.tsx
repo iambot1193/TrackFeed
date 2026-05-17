@@ -1,15 +1,18 @@
 'use client'
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, Sparkles, ArrowRight, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-export default function VerifyChoicePage() {
+function VerifyChoiceContent() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [particles, setParticles] = useState<{top: string, left: string, delay: string, opacity: number}[]>([]);
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email") || "";
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -65,7 +68,7 @@ export default function VerifyChoicePage() {
           </CardHeader>
           
           <CardContent className="space-y-4 px-0">
-            <Link href="/verify-email" className="block group">
+            <Link href={`/verify-email${email ? `?email=${encodeURIComponent(email)}` : ""}`} className="block group">
               <div className="p-5 rounded-[1.75rem] bg-white/[0.03] border border-white/5 hover:border-purple-500/30 hover:bg-white/[0.06] transition-all duration-500 flex items-center gap-4">
                 <div className="h-12 w-12 rounded-xl bg-purple-600/10 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform shrink-0">
                   <Mail size={20} />
@@ -100,5 +103,17 @@ export default function VerifyChoicePage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function VerifyChoicePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-[#050505] p-6 relative overflow-hidden">
+        <div className="text-zinc-500 font-bold uppercase tracking-widest animate-pulse">Carregando...</div>
+      </div>
+    }>
+      <VerifyChoiceContent />
+    </Suspense>
   );
 }

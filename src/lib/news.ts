@@ -33,7 +33,21 @@ const NEWS_BASE_URL = "https://newsapi.org/v2";
 const GNEWS_BASE_URL = "https://gnews.io/api/v4";
 const GUARDIAN_BASE_URL = "https://content.guardianapis.com";
 
+let cachedCategories: any[] | null = null;
+
 async function ensureCategories() {
+  if (cachedCategories) return cachedCategories;
+
+  try {
+    const existing = await prisma.category.findMany();
+    if (existing.length >= 9) {
+      cachedCategories = existing;
+      return existing;
+    }
+  } catch (err) {
+    console.error("[ensureCategories] Erro rápido ao ler categorias:", err);
+  }
+
   const initialCategories = [
     { 
       slug: "technology", 
@@ -130,16 +144,23 @@ async function ensureCategories() {
     }
   ];
 
-  const slugs = initialCategories.map(c => c.slug);
-  await prisma.category.deleteMany({ where: { slug: { notIn: slugs } } });
-  await prisma.cachedArticle.updateMany({
-    where: { category: { notIn: [...slugs, "general", "Geral"] } },
-    data: { category: "general" }
-  });
-  for (const cat of initialCategories) {
-    await prisma.category.upsert({ where: { slug: cat.slug }, update: cat, create: cat });
+  try {
+    const slugs = initialCategories.map(c => c.slug);
+    await prisma.category.deleteMany({ where: { slug: { notIn: slugs } } });
+    await prisma.cachedArticle.updateMany({
+      where: { category: { notIn: [...slugs, "general", "Geral"] } },
+      data: { category: "general" }
+    });
+    for (const cat of initialCategories) {
+      await prisma.category.upsert({ where: { slug: cat.slug }, update: cat, create: cat });
+    }
+    const finalCategories = await prisma.category.findMany();
+    cachedCategories = finalCategories;
+    return finalCategories;
+  } catch (err) {
+    console.error("[ensureCategories] Erro no setup pesado:", err);
+    return [];
   }
-  return await prisma.category.findMany();
 }
 
 const categoryTranslations: Record<string, string> = {
@@ -314,11 +335,13 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
 
     let finalArticles: NewsArticle[] = [];
     let currentPage = page;
-    const MAX_PAGES = page + 9;
+    const MAX_PAGES = page + 1; // Máximo de 2 páginas de APIs externas para velocidade incrível!
     const TARGET_SIZE = page * pageSize;
 
+    // Busca o status das cotas apenas uma vez fora do loop
+    const status = await getApiStatus();
+
     while (finalArticles.length < TARGET_SIZE && currentPage <= MAX_PAGES) {
-      const status = await getApiStatus();
       
       const newsApiPromise = (currentPage <= 5 && lang === 'pt') 
         ? fetch(`${NEWS_BASE_URL}/everything?q=${encodeURIComponent(searchTerm)}&language=${lang}&sortBy=${sortBy}&page=${currentPage}&pageSize=20&apiKey=${NEWS_API_KEY}`, { cache: 'no-store' })

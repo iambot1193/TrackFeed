@@ -20,18 +20,24 @@ export default async function DashboardPage({
 
   if (!userId) redirect("/");
 
-  const [user, favorites, history] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      include: { preferences: true }
-    }),
-    getUserFavorites(userId),
-    prisma.history.findMany({
-      where: { userId },
-      orderBy: { viewedAt: 'desc' },
-      take: 50
-    })
-  ]);
+  let user, favorites, history;
+  try {
+    [user, favorites, history] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        include: { preferences: true }
+      }),
+      getUserFavorites(userId),
+      prisma.history.findMany({
+        where: { userId },
+        orderBy: { viewedAt: 'desc' },
+        take: 50
+      })
+    ]);
+  } catch (dbError) {
+    console.error(">>> ERRO DE CONEXÃO AO BANCO NO DASHBOARD:", dbError);
+    redirect("/?error=db_connection");
+  }
 
   if (!user) redirect("/");
   

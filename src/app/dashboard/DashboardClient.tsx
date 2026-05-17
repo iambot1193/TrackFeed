@@ -198,14 +198,11 @@ export default function DashboardClient({
           ? filteredCurrent.filter(c => c !== value)
           : [...filteredCurrent, value];
 
-        // Se TODAS as categorias específicas (ou todos os interesses do usuário) forem ativadas, colapsa para 'general'
+        // Se TODAS as categorias específicas forem ativadas, colapsa para 'general'
         const allSpecificSlugs = ['technology', 'business', 'health', 'science', 'sports', 'games', 'crypto', 'movies', 'music'];
-        const userSpecificInterests = profileCategories.filter(c => c !== 'general');
-
         const hasAllGlobal = allSpecificSlugs.every(slug => updated.includes(slug));
-        const hasAllUser = userSpecificInterests.length > 0 && userSpecificInterests.every(c => updated.includes(c));
 
-        if (hasAllGlobal || hasAllUser) {
+        if (hasAllGlobal) {
           // Quando consolidado automaticamente, salvamos os filtros anteriores (sem a última selecionada) para que ao desativar o Geral volte a eles!
           setSavedPreviousCategories(filteredCurrent);
           updated = ['general'];
@@ -627,46 +624,130 @@ export default function DashboardClient({
               </div>
             )}
 
-            {newsList.length > 0 ? (
-              <>
-                <div className={`grid grid-cols-1 md:grid-cols-2 ${gridColumns === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-6`}>
-                  {newsList.slice(0, (activeTab === 'home' || activeTab === 'explore') ? visibleCount : 999999).map((article, idx) => (
-                    <PremiumNewsCard
-                      key={article.url}
-                      article={article}
-                      isFavorite={favorites.includes(article.url)}
-                      onFavorite={() => handleFavorite(article)}
-                      onClick={() => handleArticleClick(article)}
-                      gridColumns={gridColumns}
-                    />
-                  ))}
-                </div>
-
-                {/* BOTÃO CARREGAR MAIS (Apenas nas abas que suportam paginação) */}
-                {(activeTab === 'home' || activeTab === 'explore') && (
-                  <div className="mt-20 flex flex-col items-center justify-center pb-20 gap-4">
-                    {isPending ? (
-                      <div className="flex flex-col items-center gap-3 animate-pulse">
-                        <Loader2 className="animate-spin text-cyan-500" size={32} />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-500/80">Buscando notícias no radar...</span>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={handleLoadMore}
-                        className="group relative h-24 w-24 rounded-[2.5rem] bg-white/[0.03] border border-white/10 flex items-center justify-center transition-all hover:scale-110 hover:bg-cyan-500 hover:border-cyan-400 active:scale-95 shadow-[0_20px_50px_rgba(0,0,0,0.5)] cursor-pointer"
-                      >
-                        <Plus size={32} className="text-white group-hover:rotate-90 transition-transform duration-500" />
-                        <div className="absolute inset-0 rounded-[inherit] bg-cyan-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </button>
-                    )}
+            {/* CONTAINER COM BLINDAGEM DE LENTIDÃO E FEEDBACK DE CARREGAMENTO */}
+            <div className="relative min-h-[400px]">
+              {isPending && (
+                <div className="absolute inset-0 z-50 bg-[#020202]/60 backdrop-blur-md rounded-[2.5rem] flex flex-col items-center justify-center gap-6 transition-all duration-300 animate-in fade-in">
+                  <div className="relative flex items-center justify-center">
+                    <div className="h-16 w-16 rounded-full border-t-2 border-r-2 border-cyan-500 animate-spin" />
+                    <div className="absolute h-10 w-10 rounded-full border-b-2 border-l-2 border-purple-500 animate-spin-reverse" />
                   </div>
-                )}
-              </>
-            ) : isPending ? (
-              <NewsSkeletonGrid gridColumns={gridColumns} />
-            ) : (
-              <EmptyState title="Nenhuma notícia encontrada" description="Tente ajustar seus filtros ou pesquisar por outro termo." />
-            )}
+                  <span className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-400 animate-pulse italic drop-shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                    Sincronizando Radar...
+                  </span>
+                </div>
+              )}
+
+              {newsList.length > 0 ? (
+                <>
+                  {/* EXPLORE HERO BANNER: Notícia Grande Destaque no topo da aba Descobrir */}
+                  {activeTab === 'explore' && newsList[0] && (
+                    <div 
+                      onClick={() => handleArticleClick(newsList[0])}
+                      className={`group relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.03] to-white/[0.01] p-6 lg:p-8 flex flex-col lg:flex-row gap-8 shadow-2xl transition-all duration-500 hover:scale-[1.01] hover:border-cyan-500/50 hover:shadow-[0_40px_100px_rgba(6,182,212,0.15)] cursor-pointer mb-10 overflow-hidden relative ${isPending ? 'opacity-30 blur-[2px]' : ''}`}
+                    >
+                      {/* Cinematic effects */}
+                      <div className="absolute inset-0 bg-grid-dots opacity-[0.1] mix-blend-overlay pointer-events-none" />
+                      <div className="absolute top-[-50%] right-[-20%] w-[50vw] h-[50vw] bg-cyan-500/[0.04] rounded-full blur-[100px] pointer-events-none group-hover:bg-cyan-500/[0.07] transition-colors" />
+                      <div className="absolute bottom-[-50%] left-[-20%] w-[50vw] h-[50vw] bg-purple-500/[0.03] rounded-full blur-[100px] pointer-events-none" />
+                      
+                      {/* Image container */}
+                      <div className="w-full lg:w-1/2 aspect-[16/10] lg:aspect-auto rounded-2xl overflow-hidden relative border border-white/5 bg-zinc-950 shrink-0 min-h-[220px] lg:min-h-[300px]">
+                        <img 
+                          src={newsList[0].urlToImage || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800"} 
+                          alt={newsList[0].title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                        <div className="absolute top-4 left-4 h-7 px-3.5 rounded-lg bg-cyan-500 text-black font-black uppercase text-[8px] tracking-[0.2em] flex items-center justify-center shadow-lg">
+                          🔥 Destaque Principal
+                        </div>
+                      </div>
+
+                      {/* Text content */}
+                      <div className="flex flex-col justify-between py-2 space-y-6 flex-1">
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-3">
+                            <span className="h-6 px-3 rounded-lg bg-white/5 border border-white/10 text-white/60 font-black uppercase text-[8px] tracking-[0.15em] flex items-center">
+                              {newsList[0].source.name}
+                            </span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                              {newsList[0].publishedAt ? new Date(newsList[0].publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
+                            </span>
+                          </div>
+
+                          <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-white tracking-tighter uppercase italic leading-tight group-hover:text-cyan-400 transition-colors">
+                            {newsList[0].title}
+                          </h2>
+
+                          <p className="text-xs md:text-sm text-zinc-400 font-medium leading-relaxed line-clamp-3 lg:line-clamp-4">
+                            {newsList[0].description}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                          <div className="flex items-center gap-2 text-cyan-400/80 font-black uppercase text-[9px] tracking-widest group-hover:text-cyan-400 transition-all">
+                            <span>Abrir Matéria Completa</span>
+                            <ArrowRight size={14} className="transition-transform group-hover:translate-x-2 duration-300" />
+                          </div>
+
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFavorite(newsList[0]);
+                            }}
+                            className={`h-10 w-10 rounded-xl border transition-all flex items-center justify-center cursor-pointer ${
+                              favorites.includes(newsList[0].url)
+                                ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
+                                : 'bg-white/5 border-white/10 text-white/40 hover:text-white hover:bg-white/10'
+                            }`}
+                          >
+                            <BookmarkIcon size={14} fill={favorites.includes(newsList[0].url) ? "currentColor" : "none"} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className={`grid grid-cols-1 md:grid-cols-2 ${gridColumns === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-6 transition-all duration-500 ${isPending ? 'opacity-30 blur-[2px]' : ''}`}>
+                    {newsList.slice(activeTab === 'explore' ? 1 : 0, (activeTab === 'home' || activeTab === 'explore') ? (activeTab === 'explore' ? visibleCount + 1 : visibleCount) : 999999).map((article, idx) => (
+                      <PremiumNewsCard
+                        key={article.url}
+                        article={article}
+                        isFavorite={favorites.includes(article.url)}
+                        onFavorite={() => handleFavorite(article)}
+                        onClick={() => handleArticleClick(article)}
+                        gridColumns={gridColumns}
+                      />
+                    ))}
+                  </div>
+
+                  {/* BOTÃO CARREGAR MAIS (Apenas nas abas que suportam paginação) */}
+                  {(activeTab === 'home' || activeTab === 'explore') && (
+                    <div className="mt-20 flex flex-col items-center justify-center pb-20 gap-4">
+                      {isPending ? (
+                        <div className="flex flex-col items-center gap-3 animate-pulse">
+                          <Loader2 className="animate-spin text-cyan-500" size={32} />
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-500/80">Buscando notícias no radar...</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={handleLoadMore}
+                          className="group relative h-24 w-24 rounded-[2.5rem] bg-white/[0.03] border border-white/10 flex items-center justify-center transition-all hover:scale-110 hover:bg-cyan-500 hover:border-cyan-400 active:scale-95 shadow-[0_20px_50px_rgba(0,0,0,0.5)] cursor-pointer"
+                        >
+                          <Plus size={32} className="text-white group-hover:rotate-90 transition-transform duration-500" />
+                          <div className="absolute inset-0 rounded-[inherit] bg-cyan-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : isPending ? (
+                <NewsSkeletonGrid gridColumns={gridColumns} />
+              ) : (
+                <EmptyState title="Nenhuma notícia encontrada" description="Tente ajustar seus filtros ou pesquisar por outro termo." />
+              )}
+            </div>
           </div>
         )}
       </main>

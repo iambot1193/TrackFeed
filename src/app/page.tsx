@@ -1,22 +1,25 @@
 'use client'
 
-import { useState, useActionState, useEffect } from "react";
+import { useState, useActionState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import ReCAPTCHA from "react-google-recaptcha";
 import { loginUser } from "./login-actions";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-export default function LoginPage() {
+function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [state, formAction, isPending] = useActionState(loginUser, null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [particles, setParticles] = useState<{top: string, left: string, delay: string, opacity: number}[]>([]);
+  const searchParams = useSearchParams();
+  const errorParam = searchParams.get("error");
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -74,6 +77,13 @@ export default function LoginPage() {
           </CardHeader>
           
           <form action={formAction} className="space-y-5">
+            {errorParam === "db_connection" && (
+              <div className="flex items-center gap-3 p-4 text-[9px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl animate-in fade-in slide-in-from-top-4 italic">
+                <AlertCircle size={16} />
+                FALHA DE CONEXÃO: O Banco de Dados não respondeu a tempo. Tente novamente.
+              </div>
+            )}
+
             {state?.error && (
               <div className="flex items-center gap-3 p-4 text-[9px] font-black uppercase tracking-widest text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl animate-in fade-in slide-in-from-top-4 italic">
                 <AlertCircle size={16} />
@@ -142,5 +152,17 @@ export default function LoginPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-[#050505] p-4 relative overflow-hidden">
+        <div className="text-zinc-500 font-bold uppercase tracking-widest animate-pulse">Carregando...</div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

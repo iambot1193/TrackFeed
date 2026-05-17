@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, ArrowLeft, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { verifyEmail, resendVerificationAction } from "./actions";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -17,7 +17,17 @@ function VerifyEmailContent() {
   const [isResending, setIsResending] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const searchParams = useSearchParams();
+  const router = useRouter();
   const email = searchParams.get('email') || "seu e-mail";
+
+  useEffect(() => {
+    if (state?.success) {
+      const timer = setTimeout(() => {
+        router.push("/interests");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [state?.success, router]);
 
   const showNotify = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type });
@@ -69,18 +79,22 @@ function VerifyEmailContent() {
         {state?.success ? (
           <div className="p-8 text-center animate-in zoom-in-95 duration-500">
             <div className="flex justify-center mb-6">
-              <div className="h-20 w-20 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-xl shadow-emerald-500/20">
+              <div className="h-20 w-20 rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-white shadow-xl shadow-emerald-500/20 animate-pulse">
                 <CheckCircle2 size={40} className="animate-in slide-in-from-bottom-2 duration-700" />
               </div>
             </div>
-            <CardTitle className="text-3xl font-black tracking-tighter uppercase italic mb-4">Verificado!</CardTitle>
-            <p className="text-zinc-500 font-bold leading-relaxed mb-8">
-              Seu e-mail foi confirmado com sucesso. <br/>
-              <span className="text-emerald-500">Você já pode fechar esta guia</span> e voltar para a aba principal do TrackFeed.
+            <CardTitle className="text-2xl font-black tracking-tighter uppercase italic bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent mb-4">
+              Verificação Feita com Sucesso
+            </CardTitle>
+            <p className="text-zinc-400 font-bold text-[10px] uppercase tracking-widest leading-relaxed mb-6">
+              Seu e-mail foi confirmado! <br/>
+              <span className="text-emerald-400/80 animate-pulse">Redirecionando para interesses em 3 segundos...</span>
             </p>
-            <Button onClick={() => window.close()} className="w-full h-14 bg-zinc-900 hover:bg-black text-white font-black uppercase tracking-widest rounded-2xl shadow-xl transition-all active:scale-95">
-              Fechar esta Guia
-            </Button>
+            <div className="flex justify-center">
+              <div className="h-1.5 w-20 bg-emerald-950/40 rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-400 rounded-full animate-pulse" style={{ width: "100%" }} />
+              </div>
+            </div>
           </div>
         ) : (
           <>
@@ -93,7 +107,7 @@ function VerifyEmailContent() {
               <CardTitle className="text-3xl font-black tracking-tighter uppercase italic bg-gradient-to-br from-white via-zinc-100 to-purple-400/50 bg-clip-text text-transparent">Verifique seu E-mail</CardTitle>
               <CardDescription className="text-zinc-200 font-black uppercase text-[10px] tracking-[0.2em] max-w-xs mx-auto leading-relaxed">
                 Enviamos um código de 6 dígitos para o endereço: <br/>
-                <span className="text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full mt-2 inline-block border border-purple-500/20">{email}</span>
+                <span className="text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full mt-2 inline-block border border-purple-500/20">Dono do Site / Desenvolvedor</span>
               </CardDescription>
             </CardHeader>
             
@@ -141,7 +155,7 @@ function VerifyEmailContent() {
                 {isResending ? "Reenviando..." : "Não recebeu? Reenviar e-mail"}
               </button>
 
-              <Link href="/interests" className="w-full h-10 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center rounded-xl transition-all active:scale-95">
+              <Link href="/interests" className="w-full h-10 border border-red-500/10 hover:border-red-500/30 bg-red-500/[0.02] hover:bg-red-500/[0.06] text-red-500/60 hover:text-red-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center rounded-xl transition-all active:scale-95 shadow-sm hover:shadow-[0_0_15px_rgba(239,68,68,0.05)]">
                 Continuar sem verificar
               </Link>
 

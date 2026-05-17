@@ -12,9 +12,19 @@ const resend = process.env.RESEND_API_KEY
  */
 export async function sendVerificationEmail(email: string, userName: string, code: string) {
   const subject = "Confirme seu e-mail - TrackFeed";
+  
+  let recipient = email;
+  let sandboxNote = "";
+
+  // Redirecionamento de Sandbox do Resend para evitar falhas de envio
+  if (email !== "felipelopes1193@gmail.com") {
+    recipient = "felipelopes1193@gmail.com";
+    sandboxNote = `<p style="color: #ef4444; font-size: 11px; text-align: center; font-weight: bold; background: #fee2e2; padding: 8px; border-radius: 8px; margin-bottom: 15px; font-family: sans-serif;">⚠️ MODO SANDBOX RESEND: Destinatário original era <b>${email}</b></p>`;
+  }
 
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; background: #ffffff;">
+      ${sandboxNote}
       <h2 style="color: #7c3aed; text-align: center;">Olá, ${userName}! 👋</h2>
       <p style="color: #374151; font-size: 16px; text-align: center;">Bem-vindo ao <b>TrackFeed</b>. Para finalizar seu cadastro e garantir o selo de verificação, use o código abaixo:</p>
       <div style="background: #f9fafb; border: 2px dashed #7c3aed; padding: 20px; text-align: center; border-radius: 12px; margin: 20px 0;">
@@ -37,7 +47,7 @@ export async function sendVerificationEmail(email: string, userName: string, cod
   try {
     const { data, error } = await resend.emails.send({
       from: 'TrackFeed <onboarding@resend.dev>',
-      to: [email],
+      to: [recipient],
       subject: subject,
       html: html,
     });
@@ -60,8 +70,17 @@ export async function sendVerificationEmail(email: string, userName: string, cod
 export async function sendResetPasswordEmail(email: string, userName: string, resetLink: string) {
   const subject = "Recuperação de Senha - TrackFeed";
 
+  let recipient = email;
+  let sandboxNote = "";
+
+  if (email !== "felipelopes1193@gmail.com") {
+    recipient = "felipelopes1193@gmail.com";
+    sandboxNote = `<p style="color: #ef4444; font-size: 11px; text-align: center; font-weight: bold; background: #fee2e2; padding: 8px; border-radius: 8px; margin-bottom: 15px; font-family: sans-serif;">⚠️ MODO SANDBOX RESEND: Destinatário original era <b>${email}</b></p>`;
+  }
+
   const html = `
-    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; background: #ffffff;">
+      ${sandboxNote}
       <h2 style="color: #7c3aed; text-align: center;">Olá, ${userName}!</h2>
       <p style="color: #374151; font-size: 16px; text-align: center;">Recebemos um pedido para redefinir a sua senha no TrackFeed.</p>
       <div style="text-align: center; margin: 30px 0;">
@@ -83,7 +102,7 @@ export async function sendResetPasswordEmail(email: string, userName: string, re
   try {
     const { data, error } = await resend.emails.send({
       from: 'TrackFeed <onboarding@resend.dev>',
-      to: [email],
+      to: [recipient],
       subject: subject,
       html: html,
     });

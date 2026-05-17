@@ -35,27 +35,20 @@ export async function verifyEmail(prevState: any, formData: FormData) {
     }
 
     // 4. Sucesso! Marca como verificado e limpa o código
-    const updatedUser = await prisma.user.update({
+    await prisma.user.update({
       where: { id: userId },
-      include: { preferences: true },
       data: {
         emailVerified: new Date(),
         verificationCode: null // Limpa para segurança
       }
     });
 
-    // 5. Se já tem interesses, apenas retorna sucesso para a página mostrar o aviso de fechar guia
-    if (updatedUser.preferences.length > 0) {
-      return { success: true, alreadyHasInterests: true };
-    }
+    return { success: true };
 
   } catch (error) {
     console.error(">>> ERRO NA VERIFICAÇÃO:", error);
     return { error: "Ocorreu um erro no servidor. Tente novamente." };
   }
-
-  // 6. Se NÃO tem interesses (conta nova), vai para o setup
-  redirect("/interests");
 }
 
 export async function resendVerificationAction() {
