@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useActionState, useEffect } from "react";
+import { useState, useActionState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { useSearchParams } from "next/navigation";
 import { verifyEmail, resendVerificationAction } from "./actions";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const [code, setCode] = useState("");
   const [state, formAction, isPending] = useActionState(verifyEmail, null);
   const [isResending, setIsResending] = useState(false);
@@ -154,5 +154,17 @@ export default function VerifyEmailPage() {
         )}
       </Card>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-[#050505] p-4 relative overflow-hidden">
+        <div className="text-zinc-500 font-bold uppercase tracking-widest animate-pulse">Carregando...</div>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
