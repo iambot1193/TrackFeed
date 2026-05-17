@@ -62,7 +62,42 @@ Ele é quem recebe o pedido do navegador, lê o banco de dados e as APIs (usando
 | `npx prisma db push` | Sincroniza o código com o banco de dados. | Sempre que mudar o `schema.prisma`. |
 | `npx prisma generate` | Atualiza o "vocabulário" do Prisma. | Após mudar o banco ou instalar dependências. |
 | `npx tsx scratch/master-seed.ts` | Injeta notícias de teste no banco. | Se o feed estiver vazio e você quiser testar. |
+| `node check-db-quota.js` | Consulta as cotas de API restantes no banco de dados. | Sempre que quiser conferir se o GNews ou NewsAPI estourou o limite. |
 | `vercel.cmd --prod` | Atualiza o site na internet. | Sempre que terminar uma correção ou recurso novo. |
+
+### 📊 Como Auditar e Monitorar Cotas de API
+
+Para evitar surpresas com limites de requisições esgotadas nas APIs de notícias gratuitas (GNews e NewsAPI), criamos um utilitário de auditoria rápida na raiz do projeto chamado `check-db-quota.js`.
+
+Você pode rodá-lo a qualquer momento no seu terminal:
+```bash
+node check-db-quota.js
+```
+
+#### 📝 Código Fonte do Utilitário (`check-db-quota.js`)
+```javascript
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function main() {
+  const status = await prisma.apiStatus.findUnique({ where: { id: "singleton" } });
+  console.log("\n=== API QUOTA STATUS IN DATABASE ===");
+  if (!status) {
+    console.log("Nenhum registro de apiStatus encontrado no banco.");
+  } else {
+    console.log(`NewsAPI Quota Restante: \${status.newsApiQuota}`);
+    console.log(`GNews Quota Restante: \${status.gnewsQuota}`);
+    console.log(`Última Atualização: \${status.lastUpdated}`);
+  }
+  console.log("=====================================\\n");
+  await prisma.$disconnect();
+}
+
+main().catch(err => {
+  console.error("Erro ao verificar cota no banco:", err);
+  process.exit(1);
+});
+```
 
 ---
 

@@ -35,15 +35,99 @@ const GUARDIAN_BASE_URL = "https://content.guardianapis.com";
 
 async function ensureCategories() {
   const initialCategories = [
-    { slug: "technology", label: "Tecnologia", keywords: ["apple", "google", "samsung", "microsoft", "intel", "amd", "smartphone", "gadget", "windows", "linux", "iphone", "android", "software", "hardware", "celular", "computador", "tech"] },
-    { slug: "movies", label: "Cinema", keywords: ["marvel", "oscar", "netflix", "disney", "warner", "trailer", "estreia", "diretor", "actor", "actress", "ator", "atriz", "cinema", "filme", "hollywood", "streaming"] },
-    { slug: "games", label: "Games", keywords: ["playstation", "xbox", "nintendo", "steam", "rpg", "ubisoft", "epic games", "gta", "fortnite", "console", "gamer", "jogos", "esports", "cyberpunk"] },
-    { slug: "sports", label: "Esportes", keywords: ["futebol", "neymar", "messi", "nba", "flamengo", "palmeiras", "corinthians", "formula 1", "olimpíadas", "gol", "campeonato", "soccer", "basketball", "tennis"] },
-    { slug: "science", label: "Ciência", keywords: ["nasa", "espaço", "planeta", "descoberta", "estudo", "pesquisa", "cientista", "genética", "universo", "telescópio", "biologia", "química", "física"] },
-    { slug: "health", label: "Saúde", keywords: ["saúde", "medicina", "vacina", "dieta", "exercício", "hospital", "vírus", "nutrição", "médico", "wellness", "fitness", "cancer", "doença"] },
-    { slug: "crypto", label: "Cripto", keywords: ["bitcoin", "ethereum", "blockchain", "nft", "crypto", "cripto", "binance", "criptomoeda", "wallet", "mining", "dogecoin"] },
-    { slug: "music", label: "Música", keywords: ["música", "show", "álbum", "cantor", "banda", "spotify", "concerto", "clipe", "tour", "músico", "rock", "pop", "rap", "jazz", "hip-hop", "streaming", "vocalist", "billboard", "grammy", "single", "track", "canção", "melodia", "instrumento", "violão", "piano", "rádio", "mp3", "vinyl", "turnê", "compositor", "letra", "vocal", "batida", "ritmo", "soundcloud", "deezer", "apple music", "tidal", "mpb", "samba", "sertanejo", "funk", "trap", "reggae", "heavy metal", "indie", "eletrônica", "dj", "remix"] },
-    { slug: "business", label: "Negócios", keywords: ["negócios", "economia", "mercado", "ações", "empresa", "startup", "investimento", "dólar", "pib", "finanças", "business", "economy", "market", "stock", "company", "startup", "investment", "finance"] }
+    { 
+      slug: "technology", 
+      label: "Tecnologia", 
+      keywords: [
+        "apple", "google", "samsung", "microsoft", "intel", "amd", "nvidia", "smartphone", "gadget", 
+        "windows", "linux", "iphone", "android", "software", "hardware", "celular", "computador", 
+        "tech", "tecnologia", "inteligência artificial", "ia", "chatgpt", "gemini", "copilot", 
+        "processador", "notebook", "whatsapp", "aplicativo", "app", "desenvolvimento", "programação", 
+        "tecnoblog", "canaltech", "olhar digital", "tudocelular", "adrenaline", "techtudo", "cybersegurança", 
+        "hacker", "robótica", "ciência de dados"
+      ] 
+    },
+    { 
+      slug: "movies", 
+      label: "Cinema", 
+      keywords: [
+        "marvel", "oscar", "netflix", "disney", "warner", "trailer", "estreia", "diretor", "actor", 
+        "actress", "ator", "atriz", "cinema", "filme", "filmes", "hollywood", "streaming", "série", 
+        "séries", "hbo max", "prime video", "globoplay", "roteiro", "lançamento", "pipoca", "adorocinema", 
+        "omelete", "cinepop", "pipoca moderna"
+      ] 
+    },
+    { 
+      slug: "games", 
+      label: "Games", 
+      keywords: [
+        "playstation", "xbox", "nintendo", "steam", "rpg", "ubisoft", "epic games", "gta", "fortnite", 
+        "console", "gamer", "gamers", "jogos", "jogo", "esports", "e-sports", "cyberpunk", "videogame", 
+        "jogabilidade", "cs:go", "valorant", "league of legends", "lol", "minecraft", "retrogame", "voxel", 
+        "meuplaystation", "the enemy"
+      ] 
+    },
+    { 
+      slug: "sports", 
+      label: "Esportes", 
+      keywords: [
+        "futebol", "neymar", "messi", "nba", "flamengo", "palmeiras", "corinthians", "formula 1", 
+        "olimpíadas", "gol", "campeonato", "soccer", "basketball", "tennis", "esporte", "esportes", 
+        "brasileirão", "copa do brasil", "libertadores", "champions league", "basquete", "vôlei", "tênis", 
+        "fórmula 1", "f1", "estádio", "ge.globo", "globo esporte", "uol esporte", "lance!", "fifa", 
+        "atletismo", "mma", "ufc"
+      ] 
+    },
+    { 
+      slug: "science", 
+      label: "Ciência", 
+      keywords: [
+        "nasa", "espaço", "planeta", "descoberta", "estudo", "pesquisa", "cientista", "cientistas", 
+        "genética", "universo", "telescópio", "biologia", "química", "física", "astronomia", "satélite", 
+        "asteroide", "arqueologia", "científico", "galileu", "superinteressante"
+      ] 
+    },
+    { 
+      slug: "health", 
+      label: "Saúde", 
+      keywords: [
+        "saúde", "medicina", "vacina", "dieta", "exercício", "hospital", "vírus", "nutrição", 
+        "médico", "wellness", "fitness", "cancer", "doença", "doenças", "remédio", "tratamento", 
+        "imunização", "bem-estar", "saúde mental", "terapia", "cardiologia", "epidemia"
+      ] 
+    },
+    { 
+      slug: "crypto", 
+      label: "Cripto", 
+      keywords: [
+        "bitcoin", "ethereum", "blockchain", "nft", "crypto", "cripto", "binance", "criptomoeda", 
+        "criptomoedas", "wallet", "mining", "dogecoin", "btc", "eth", "solana", "carteira digital", 
+        "token", "halving", "mineração", "defi", "portal do bitcoin", "criptofácil"
+      ] 
+    },
+    { 
+      slug: "music", 
+      label: "Música", 
+      keywords: [
+        "música", "músicas", "show", "shows", "álbum", "cantor", "cantora", "banda", "spotify", 
+        "concerto", "clipe", "tour", "músico", "rock", "pop", "rap", "jazz", "hip-hop", "streaming", 
+        "vocalist", "billboard", "grammy", "single", "track", "canção", "melodia", "instrumento", 
+        "violão", "piano", "rádio", "mp3", "vinyl", "turnê", "compositor", "letra", "vocal", 
+        "batida", "ritmo", "soundcloud", "deezer", "apple music", "tidal", "mpb", "samba", 
+        "sertanejo", "funk", "trap", "reggae", "heavy metal", "indie", "eletrônica", "dj", 
+        "remix", "lollapalooza", "rock in rio", "pagode", "samba"
+      ] 
+    },
+    { 
+      slug: "business", 
+      label: "Negócios", 
+      keywords: [
+        "negócios", "economia", "mercado", "ações", "empresa", "empresas", "startup", "startups", 
+        "investimento", "investimentos", "dólar", "pib", "finanças", "business", "economy", "market", 
+        "stock", "company", "finance", "ibovespa", "bolsa de valores", "inflação", "juros", "selic", 
+        "imposto", "receita federal", "faturamento", "exame", "infomoney", "valor econômico"
+      ] 
+    }
   ];
 
   const slugs = initialCategories.map(c => c.slug);
@@ -89,14 +173,45 @@ async function cacheArticles(articles: NewsArticle[], lang: string) {
 }
 
 const sourceCategoryMap: Record<string, string> = {
+  // Tecnologia
   "TechCrunch": "technology", "The Verge": "technology", "Gizmodo": "technology", "Wired": "technology",
-  "ESPN": "sports", "Globo Esporte": "sports", "Marca": "sports", "UOL Esporte": "sports",
+  "Tecnoblog": "technology", "Canaltech": "technology", "Olhar Digital": "technology",
+  "TudoCelular": "technology", "Adrenaline": "technology", "TechTudo": "technology",
+  "Hardware.com.br": "technology",
+
+  // Esportes
+  "ESPN": "sports", "Globo Esporte": "sports", "GE": "sports", "Marca": "sports", 
+  "UOL Esporte": "sports", "Lance!": "sports", "Gazeta Esportiva": "sports",
+
+  // Cripto
   "CoinDesk": "crypto", "CoinTelegraph": "crypto", "Binance": "crypto",
-  "IGN": "games", "GameSpot": "games", "PC Gamer": "games", "Polygon": "games", "Eurogamer": "games",
+  "Portal do Bitcoin": "crypto", "Livecoins": "crypto", "CriptoFácil": "crypto",
+
+  // Games
+  "IGN": "games", "GameSpot": "games", "PC Gamer": "games", "Polygon": "games", 
+  "Eurogamer": "games", "MeuPlayStation": "games", "Voxel": "games", 
+  "Jovem Nerd": "games", "The Enemy": "games", "Eurogamer.pt": "games", 
+  "IGN Brasil": "games", "GameBlast": "games",
+
+  // Cinema
   "Variety": "movies", "The Hollywood Reporter": "movies", "Netflix": "movies",
+  "Omelete": "movies", "AdoroCinema": "movies", "Pipoca Moderna": "movies", 
+  "CinePOP": "movies", "Cinema com Rapadura": "movies",
+
+  // Música
   "Pitchfork": "music", "Rolling Stone": "music", "Billboard": "music", "Spotify": "music",
+
+  // Ciência
   "Nature": "science", "NASA": "science", "Scientific American": "science",
-  "Bloomberg": "business", "Forbes": "business", "CNBC": "business", "Exame": "business"
+  "Galileu": "science", "Superinteressante": "science", "Revista Planeta": "science",
+
+  // Saúde
+  "Saúde Debate": "health", "Drauzio Varella": "health",
+
+  // Negócios
+  "Bloomberg": "business", "Forbes": "business", "CNBC": "business", 
+  "Exame": "business", "InfoMoney": "business", "Valor Econômico": "business",
+  "G1 Economia": "business", "CNN Brasil Business": "business"
 };
 
 function identifyCategory(title: string, description: string, availableCats: any[], sourceName?: string): string {
@@ -139,12 +254,13 @@ async function categorizeBatchWithAI(articles: any[], availableCats: any[]): Pro
   const validCategories = availableCats.map(c => c.slug.toLowerCase());
   validCategories.push("general");
 
-  const prompt = `Classifique estas notícias: ${validCategories.join(", ")}. Use "general" se tiver dúvida.
+  const prompt = `Classifique estas notícias nas categorias válidas: ${validCategories.join(", ")}. Use "general" se tiver dúvida.
 Notícias:
 ${needsAI.map((a, i) => `[${i}] Título: ${a.title}\nDescrição: ${a.description}`).join("\n\n")}
-Retorne APENAS JSON: { "categories": ["cat1", "cat2", ...] }`;
+Retorne APENAS JSON no formato exato: { "categories": ["cat1", "cat2", ...] }`;
 
   try {
+    console.log(`[Gemini AI] Categorizando lote de ${needsAI.length} notícias...`);
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -165,7 +281,9 @@ Retorne APENAS JSON: { "categories": ["cat1", "cat2", ...] }`;
           }
        }
     }
-  } catch (e) { }
+  } catch (e) {
+    console.error("[Gemini AI] Error in categorization:", e);
+  }
   return articles; 
 }
 
@@ -201,12 +319,12 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
 
     while (finalArticles.length < TARGET_SIZE && currentPage <= MAX_PAGES) {
       const status = await getApiStatus();
-      if (status.newsApiQuota <= 0 && status.gnewsQuota <= 0 && lang === 'pt') break;
-
-      const newsApiPromise = (currentPage <= 5 && status.newsApiQuota > 0 && lang === 'pt') 
+      
+      const newsApiPromise = (currentPage <= 5 && lang === 'pt') 
         ? fetch(`${NEWS_BASE_URL}/everything?q=${encodeURIComponent(searchTerm)}&language=${lang}&sortBy=${sortBy}&page=${currentPage}&pageSize=20&apiKey=${NEWS_API_KEY}`, { cache: 'no-store' })
             .then(res => res.json())
             .then(async data => {
+              console.log(`[NewsAPI] Status: ${data.status} | Total: ${data.totalResults || 0} | Code: ${data.code || 'None'} | Msg: ${data.message || 'None'}`);
               if (data.status === "ok" && data.articles?.length > 0) {
                 await updateApiQuota("newsapi");
                 return data.articles.filter((a: any) => a.title && a.urlToImage && !a.title.includes("[Removed]")).map((art: any) => ({
@@ -215,13 +333,21 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
                 }));
               }
               return [];
-            }).catch(() => [])
+            }).catch((err) => {
+              console.error("[NewsAPI] Fetch error:", err);
+              return [];
+            })
         : Promise.resolve([]);
 
-      const gnewsPromise = (GNEWS_API_KEY && status.gnewsQuota > 0 && lang === 'pt')
+      const gnewsPromise = (GNEWS_API_KEY && lang === 'pt')
         ? fetch(`${GNEWS_BASE_URL}/search?q=${encodeURIComponent(searchTerm.length > 190 ? rawTargets.join(" OR ") : searchTerm)}&lang=${lang}&apikey=${GNEWS_API_KEY}&max=10&page=${currentPage}`, { cache: 'no-store' })
             .then(res => res.json())
             .then(async data => {
+              if (data.errors) {
+                console.log("[GNews] Errors:", data.errors);
+              } else {
+                console.log(`[GNews] Articles count: ${data.articles?.length || 0}`);
+              }
               if (data.articles && data.articles.length > 0) {
                 await updateApiQuota("gnews");
                 return data.articles.map((art: any) => ({
@@ -230,7 +356,10 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
                 }));
               }
               return [];
-            }).catch(() => [])
+            }).catch((err) => {
+              console.error("[GNews] Fetch error:", err);
+              return [];
+            })
         : Promise.resolve([]);
 
       const guardianPromise = (GUARDIAN_API_KEY && lang === 'en')
@@ -252,13 +381,42 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
       if (combined.length === 0 && currentPage > page + 1) break;
 
       let unique = dedup(combined);
-      unique.forEach((art: any) => { art.category = identifyCategory(art.title, art.description, availableCats, art.source?.name); });
-      unique = await categorizeBatchWithAI(unique, availableCats);
+      const isSingleCategory = categories.length === 1 && categories[0].toLowerCase() !== 'general';
+      if (isSingleCategory) {
+        const selectedCat = categories[0].toLowerCase();
+        unique.forEach((art: any) => {
+          art.category = selectedCat;
+        });
+      } else {
+        unique.forEach((art: any) => { art.category = identifyCategory(art.title, art.description, availableCats, art.source?.name); });
+        unique = await categorizeBatchWithAI(unique, availableCats);
+      }
+
       if (!rawTargets.includes("general")) {
         unique = unique.filter(a => rawTargets.includes(a.category?.toLowerCase() || ""));
       }
       finalArticles = dedup([...finalArticles, ...unique]);
-      if (finalArticles.length >= TARGET_SIZE) break;
+      
+      // Save fresh news to cache
+      await Promise.all(unique.map(async art => {
+        try {
+          await prisma.cachedArticle.upsert({
+            where: { url: art.url },
+            update: {},
+            create: {
+              title: art.title,
+              description: art.description,
+              url: art.url,
+              imageUrl: art.urlToImage,
+              publishedAt: new Date(art.publishedAt),
+              source: art.source.name,
+              category: art.category,
+              language: art.language
+            }
+          });
+        } catch (e) {}
+      }));
+
       currentPage++;
     }
 
@@ -266,6 +424,7 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
       await cacheArticles(finalArticles, lang);
     }
 
+    /*
     if (finalArticles.length < 9) {
       const fourMonthsAgo = new Date(Date.now() - 120 * 24 * 60 * 60 * 1000);
       const thematicBackup = await prisma.cachedArticle.findMany({
@@ -275,13 +434,14 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
       if (thematicBackup.length > 0) {
         finalArticles = [...finalArticles, ...thematicBackup.map(b => ({
           title: b.title, description: b.description || "", url: b.url, urlToImage: b.imageUrl || "",
-          publishedAt: b.publishedAt?.toISOString() || b.cachedAt.toISOString(), source: { name: b.source || "Arquivo" },
+          publishedAt: b.publishedAt?.toISOString() || b.cachedAt.toISOString(), source: { name: `${b.source || "Arquivo"} [BD]` },
           category: b.category, language: b.language
         }))];
       }
       finalArticles = dedup(finalArticles);
     }
-    return finalArticles.slice(0, Math.max(12, pageSize));
+    */
+    return finalArticles.slice(0, Math.max(12, TARGET_SIZE));
   } catch (error) { return []; }
 }
 

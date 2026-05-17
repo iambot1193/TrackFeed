@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useTransition } from "react";
 import {
   X, AlertCircle, Loader2, SearchX, Globe, Filter,
   BookmarkIcon, ArrowRight, ShieldCheck, User, LogOut,
-  Settings, Camera, BarChart2, Plus
+  Settings, Camera, BarChart2, Plus, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -235,7 +235,7 @@ export default function DashboardClient({
       params.delete(key);
     }
 
-    if (key !== 'tab') params.set('page', '1');
+    if (key !== 'tab' && key !== 'page') params.set('page', '1');
     startTransition(() => {
       router.push(`/dashboard?${params.toString()}`, { scroll: false });
     });
@@ -497,6 +497,36 @@ export default function DashboardClient({
               </div>
             </header>
 
+            {/* AVISO DE COTAS ESTOURADAS (Luxury Cyber-Glass Red Warning) */}
+            {!dismissedAlert && (apiStatus?.newsApiRemaining <= 0 || apiStatus?.gnewsQuota <= 0) && (
+              <div className="relative overflow-hidden p-6 rounded-[2rem] border border-red-500/30 bg-gradient-to-r from-red-950/20 to-purple-950/15 backdrop-blur-3xl animate-in fade-in slide-in-from-top-6 duration-500 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_20px_50px_rgba(239,68,68,0.1)]">
+                {/* Nebula Aura Backdrops */}
+                <div className="absolute top-0 left-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+                
+                <div className="flex items-center gap-4 text-left">
+                  <div className="h-12 w-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0 shadow-lg animate-pulse">
+                    <AlertCircle size={22} className="text-red-400" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-black text-white uppercase tracking-wider italic">Cotas de API Estouradas</h4>
+                    <p className="text-[11px] text-white/60 leading-relaxed font-medium">
+                      O limite de buscas gratuitas diárias das APIs em Português foi atingido. Ative o idioma <span className="text-red-400 font-bold">Inglês</span> no botão <span className="text-red-400 font-bold">"Linguagem & Filtros"</span> para utilizar o sistema de busca secundário (The Guardian API) e continuar navegando normalmente!
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <button 
+                    onClick={() => setDismissedAlert(true)}
+                    className="h-11 w-11 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500 hover:border-red-400 hover:text-white text-white/60 transition-all flex items-center justify-center cursor-pointer"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {(() => {
               const userInterests = ALL_POSSIBLE_CATEGORIES.filter((cat: any) => 
                 profileCategories.includes(cat.slug)
@@ -556,9 +586,7 @@ export default function DashboardClient({
               </div>
             )}
 
-            {isPending ? (
-              <NewsSkeletonGrid />
-            ) : newsList.length > 0 ? (
+            {newsList.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {newsList.slice(0, (activeTab === 'home' || activeTab === 'explore') ? visibleCount : 999999).map((article, idx) => (
@@ -574,17 +602,26 @@ export default function DashboardClient({
 
                 {/* BOTÃO CARREGAR MAIS (Apenas nas abas que suportam paginação) */}
                 {(activeTab === 'home' || activeTab === 'explore') && (
-                  <div className="mt-20 flex justify-center pb-20">
-                    <button
-                      onClick={handleLoadMore}
-                      className="group relative h-24 w-24 rounded-[2.5rem] bg-white/[0.03] border border-white/10 flex items-center justify-center transition-all hover:scale-110 hover:bg-cyan-500 hover:border-cyan-400 active:scale-95 shadow-[0_20px_50px_rgba(0,0,0,0.5)] cursor-pointer"
-                    >
-                      <Plus size={32} className="text-white group-hover:rotate-90 transition-transform duration-500" />
-                      <div className="absolute inset-0 rounded-[inherit] bg-cyan-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
+                  <div className="mt-20 flex flex-col items-center justify-center pb-20 gap-4">
+                    {isPending ? (
+                      <div className="flex flex-col items-center gap-3 animate-pulse">
+                        <Loader2 className="animate-spin text-cyan-500" size={32} />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-500/80">Buscando notícias no radar...</span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handleLoadMore}
+                        className="group relative h-24 w-24 rounded-[2.5rem] bg-white/[0.03] border border-white/10 flex items-center justify-center transition-all hover:scale-110 hover:bg-cyan-500 hover:border-cyan-400 active:scale-95 shadow-[0_20px_50px_rgba(0,0,0,0.5)] cursor-pointer"
+                      >
+                        <Plus size={32} className="text-white group-hover:rotate-90 transition-transform duration-500" />
+                        <div className="absolute inset-0 rounded-[inherit] bg-cyan-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    )}
                   </div>
                 )}
               </>
+            ) : isPending ? (
+              <NewsSkeletonGrid />
             ) : (
               <EmptyState title="Nenhuma notícia encontrada" description="Tente ajustar seus filtros ou pesquisar por outro termo." />
             )}

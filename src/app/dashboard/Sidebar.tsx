@@ -72,9 +72,8 @@ export function Sidebar({ activeTab, updateFilters, isSidebarOpen, setSidebarOpe
                   user.name.substring(0, 2)
                 )}
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col justify-center">
                 <span className="text-xs font-black text-white uppercase truncate w-24 group-hover:text-cyan-400 transition-colors">{user.name}</span>
-                <span className="text-[10px] text-zinc-600">Pro Member</span>
               </div>
             </button>
             <button onClick={logout} className="p-2 text-zinc-600 hover:text-red-400 transition-colors"><LogOut size={18} /></button>
