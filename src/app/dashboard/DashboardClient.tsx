@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useTransition } from "react";
 import {
   X, AlertCircle, Loader2, SearchX, Globe, Filter,
   BookmarkIcon, ArrowRight, ShieldCheck, User, LogOut,
-  Settings, Camera, BarChart2, Plus, Zap
+  Settings, Camera, BarChart2, Plus, Zap, CheckCircle2, Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,7 @@ import { useTheme } from "@/components/theme-provider";
 import {
   toggleFavorite, addToHistory, updateUserProfile, logout,
   updateUserPreferences, deleteAccountAction, getApiStatusAction,
-  summarizeNewsAction
+  summarizeNewsAction, resendVerificationEmailAction, verifyEmailInDashboardAction
 } from "./actions";
 
 const ALL_POSSIBLE_CATEGORIES = [
@@ -98,6 +98,16 @@ export default function DashboardClient({
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
+  // Verify modal state
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [verifyCode, setVerifyCode] = useState("");
+  const [verifyError, setVerifyError] = useState("");
+  const [verifySuccess, setVerifySuccess] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResendingInModal, setIsResendingInModal] = useState(false);
+  const [modalNotify, setModalNotify] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [userIsVerifiedState, setUserIsVerifiedState] = useState(user.isVerified);
+
   // Modal password states
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -153,9 +163,14 @@ export default function DashboardClient({
     };
   }, []);
 
+  const lastTabRef = useRef(currentFilters.tab);
+
   // SINCRONIZAÇÃO CRÍTICA: Atualiza a lista quando os dados do servidor mudam
   useEffect(() => {
-    if (currentFilters.page === 1) {
+    const tabChanged = lastTabRef.current !== currentFilters.tab;
+    lastTabRef.current = currentFilters.tab;
+
+    if (currentFilters.page === 1 || tabChanged) {
       setNewsList(initialNews);
       setVisibleRows(3);
     } else {
@@ -169,7 +184,7 @@ export default function DashboardClient({
         });
       });
     }
-  }, [initialNews]);
+  }, [initialNews, currentFilters.tab, currentFilters.page]);
 
   const updateFilters = (key: string, value: any) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -234,7 +249,7 @@ export default function DashboardClient({
       params.delete(key);
     }
 
-    if (key !== 'tab' && key !== 'page') params.set('page', '1');
+    if (key !== 'page') params.set('page', '1');
     startTransition(() => {
       router.push(`/dashboard?${params.toString()}`, { scroll: false });
     });
@@ -254,6 +269,10 @@ export default function DashboardClient({
   const handleFavorite = async (article: NewsArticle) => {
     const updated = favorites.includes(article.url) ? favorites.filter(url => url !== article.url) : [...favorites, article.url];
     setFavorites(updated);
+
+    if (activeTab === 'explore') {
+      setNewsList(prev => prev.filter(item => item.url !== article.url));
+    }
 
     await toggleFavorite({
       title: article.title,
@@ -277,6 +296,7 @@ export default function DashboardClient({
       // Sincroniza com o servidor imediatamente
       router.refresh();
     }
+
     window.open(article.url, '_blank');
   };
 
@@ -310,6 +330,65 @@ export default function DashboardClient({
     } else {
       showToast("Seus interesses foram atualizados com sucesso!", "success");
       router.refresh();
+    }
+  };
+
+  const handleOpenVerifyModal = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setVerifyCode("");
+    setVerifyError("");
+    setVerifySuccess(false);
+    setShowVerifyModal(true);
+    setIsResendingInModal(true);
+    
+    // Automatically trigger initial PIN email when opening the modal!
+    const result = await resendVerificationEmailAction();
+    setIsResendingInModal(false);
+    if (result.error) {
+      setVerifyError(result.error);
+    } else {
+      setModalNotify({ type: 'success', message: "Código enviado! Verifique sua caixa de entrada." });
+      setTimeout(() => setModalNotify(null), 4000);
+    }
+  };
+
+  const handleVerifyModalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (verifyCode.length < 6) {
+      setVerifyError("Digite os 6 dígitos do código.");
+      return;
+    }
+    setVerifyError("");
+    setIsVerifying(true);
+    
+    const result = await verifyEmailInDashboardAction(verifyCode);
+    setIsVerifying(false);
+    
+    if (result.error) {
+      setVerifyError(result.error);
+    } else {
+      setVerifySuccess(true);
+      setUserIsVerifiedState(true);
+      setModalNotify({ type: 'success', message: "E-mail verificado com sucesso!" });
+      setTimeout(() => {
+        setShowVerifyModal(false);
+        setVerifySuccess(false);
+        setVerifyCode("");
+      }, 3000);
+    }
+  };
+
+  const handleResendInModal = async () => {
+    setVerifyError("");
+    setIsResendingInModal(true);
+    const result = await resendVerificationEmailAction();
+    setIsResendingInModal(false);
+    
+    if (result.error) {
+      setVerifyError(result.error);
+    } else {
+      setModalNotify({ type: 'success', message: "Novo código enviado com sucesso!" });
+      setTimeout(() => setModalNotify(null), 4000);
     }
   };
 
@@ -458,6 +537,8 @@ export default function DashboardClient({
             setIsDeletingAccount={setIsDeletingAccount}
             setIsChangingEmail={setIsChangingEmail}
             ALL_POSSIBLE_CATEGORIES={ALL_POSSIBLE_CATEGORIES}
+            userIsVerifiedState={userIsVerifiedState}
+            handleOpenVerifyModal={handleOpenVerifyModal}
           />
         ) : (
           <div className="max-w-6xl mx-auto space-y-10">
@@ -918,6 +999,107 @@ export default function DashboardClient({
           </div>
         </div>
       )}
+      {/* MODAL VERIFIQUE SEU EMAIL */}
+      {showVerifyModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          
+          {/* LOCAL MODAL TOAST NOTIFICATION */}
+          {modalNotify && (
+            <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[200] px-8 py-4 rounded-[2rem] border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-2xl shadow-emerald-500/10 backdrop-blur-2xl flex items-center gap-4 animate-in slide-in-from-top-8 duration-500">
+              <CheckCircle2 size={20} className="animate-pulse" />
+              <span className="text-xs font-black uppercase tracking-widest">{modalNotify.message}</span>
+            </div>
+          )}
+
+          <div className="w-full max-w-md p-10 rounded-[3rem] bg-zinc-950 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] relative space-y-8 animate-in zoom-in-95 duration-300">
+            <button
+              onClick={() => { setShowVerifyModal(false); setVerifyCode(""); setVerifyError(""); }}
+              className="absolute top-6 right-6 h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            {verifySuccess ? (
+              <div className="text-center animate-in zoom-in-95 duration-500 py-6">
+                <div className="flex justify-center mb-6">
+                  <div className="h-20 w-20 rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-white shadow-xl shadow-emerald-500/20 animate-pulse">
+                    <CheckCircle2 size={40} className="animate-in slide-in-from-bottom-2 duration-700" />
+                  </div>
+                </div>
+                <h3 className="text-2xl font-black tracking-tighter uppercase italic bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent mb-4">
+                  Verificação Feita com Sucesso
+                </h3>
+                <p className="text-zinc-400 font-bold text-[10px] uppercase tracking-widest leading-relaxed">
+                  Seu e-mail foi confirmado! <br/>
+                  <span className="text-emerald-400/80 animate-pulse">Retornando ao perfil...</span>
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4 text-center select-none pt-4">
+                  <div className="flex justify-center mb-2">
+                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-[0_0_30px_rgba(147,51,234,0.3)]">
+                      <Mail size={24} />
+                    </div>
+                  </div>
+                  <h3 className="text-3xl font-black tracking-tighter uppercase italic bg-gradient-to-br from-white via-zinc-100 to-purple-400/50 bg-clip-text text-transparent">Verifique seu E-mail</h3>
+                  <p className="text-zinc-200 font-black uppercase text-[10px] tracking-[0.2em] max-w-xs mx-auto leading-relaxed">
+                    Enviamos um código de 6 dígitos para o endereço: <br/>
+                    <span className="text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full mt-2 inline-block border border-purple-500/20">Dono do Site / Desenvolvedor</span>
+                  </p>
+                </div>
+
+                <form onSubmit={handleVerifyModalSubmit} className="space-y-6">
+                  {verifyError && (
+                    <div className="flex items-center gap-2 p-3 text-xs font-black uppercase tracking-wider text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg animate-in fade-in">
+                      <AlertCircle size={14} />
+                      {verifyError}
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <div className="flex justify-center">
+                      <input 
+                        type="text" 
+                        value={verifyCode} 
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                          setVerifyCode(val);
+                        }}
+                        placeholder="0 0 0 0 0 0"
+                        className="w-full h-16 text-center text-3xl font-black tracking-[0.5em] bg-black/40 border border-zinc-800/50 text-white focus:border-purple-500/50 rounded-2xl transition-all shadow-inner placeholder:text-zinc-800 focus:outline-none" 
+                        required
+                        autoFocus
+                      />
+                    </div>
+                    <p className="text-[10px] text-center text-zinc-300 uppercase tracking-widest font-black italic">Digite o código de confirmação</p>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    disabled={isVerifying || verifyCode.length < 6}
+                    className="w-full h-14 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:brightness-110 text-white font-black uppercase text-[11px] tracking-[0.2em] shadow-[0_20px_40px_rgba(147,51,234,0.3)] transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 select-none rounded-2xl cursor-pointer"
+                  >
+                    {isVerifying ? <Loader2 className="animate-spin mr-2" size={16} /> : <CheckCircle2 className="mr-2" size={16} />}
+                    {isVerifying ? "Verificando..." : "Confirmar E-mail"}
+                  </Button>
+                </form>
+
+                <div className="text-center pt-2">
+                  <button 
+                    type="button"
+                    onClick={handleResendInModal}
+                    disabled={isResendingInModal}
+                    className="text-purple-500 hover:text-purple-400 text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 cursor-pointer bg-transparent border-none"
+                  >
+                    {isResendingInModal ? "Reenviando..." : "Não recebeu? Reenviar e-mail"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* PREMIUM GLASS TOAST NOTIFICATION */}
       <div 
@@ -1015,7 +1197,9 @@ function ProfileSection({
   setIsChangingPassword,
   setIsDeletingAccount,
   setIsChangingEmail,
-  ALL_POSSIBLE_CATEGORIES
+  ALL_POSSIBLE_CATEGORIES,
+  userIsVerifiedState,
+  handleOpenVerifyModal
 }: any) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1066,10 +1250,23 @@ function ProfileSection({
         </div>
         <div className="flex-1">
           <h2 className="text-3xl font-black text-white tracking-tighter">{user.name}</h2>
-          <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-black uppercase tracking-widest mt-1.5">
-            <AlertCircle size={12} className="text-cyan-500/80" /> 
-            Verificação disponível apenas no modo de deploy
-          </div>
+          {userIsVerifiedState ? (
+            <div className="flex items-center gap-2 text-emerald-400 text-[10px] font-black uppercase tracking-widest mt-1.5">
+              <ShieldCheck size={12} className="text-emerald-400" /> 
+              E-mail Verificado
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-rose-400 text-[10px] font-black uppercase tracking-widest mt-1.5 flex-wrap">
+              <AlertCircle size={12} className="text-rose-400 animate-pulse" /> 
+              E-mail não verificado
+              <button 
+                onClick={handleOpenVerifyModal}
+                className="ml-2 px-2.5 py-1 rounded-lg bg-cyan-500 text-black font-black uppercase text-[8px] tracking-wider flex items-center justify-center hover:bg-cyan-400 transition-all shadow-lg hover:shadow-cyan-500/20 active:scale-95 cursor-pointer border-none"
+              >
+                Verificar Agora
+              </button>
+            </div>
+          )}
         </div>
         <div>
           <Button onClick={logout} className="bg-white/5 hover:bg-white/10 text-white h-12 w-12 rounded-xl transition-all border border-white/5 shadow-lg flex items-center justify-center"><LogOut size={20} /></Button>

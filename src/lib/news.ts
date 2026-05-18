@@ -433,8 +433,8 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
               imageUrl: art.urlToImage,
               publishedAt: new Date(art.publishedAt),
               source: art.source.name,
-              category: art.category,
-              language: art.language
+              category: art.category || "general",
+              language: art.language || lang
             }
           });
         } catch (e) {}

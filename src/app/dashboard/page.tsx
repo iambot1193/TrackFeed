@@ -160,11 +160,16 @@ export default async function DashboardPage({
     historyStats = stats;
 
   } else if (tab === 'explore') {
-    news = await fetchNewsWithFilters({
+    const rawNews = await fetchNewsWithFilters({
       languages, sortBy: "popularity",
       categories: catParam ? selectedCategories : ["general", "technology", "science", "business", "ai", "games"],
       query: query || "", page
     });
+    const excludeUrls = new Set([
+      ...favorites.map((f: any) => f.url),
+      ...history.map((h: any) => h.url)
+    ]);
+    news = rawNews.filter(article => !excludeUrls.has(article.url));
   } else if (tab === 'profile') {
     news = [];
   } else {

@@ -325,3 +325,35 @@ export async function summarizeNewsAction(title: string, description: string) {
   const summary = await summarizeArticle(title, description);
   return { summary };
 }
+
+/**
+ * Verifica o código de e-mail enviado diretamente da dashboard.
+ */
+export async function verifyEmailInDashboardAction(code: string) {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("userId")?.value;
+  if (!userId) return { error: "Sessão expirada." };
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return { error: "Usuário não encontrado." };
+    if (user.emailVerified) return { error: "Sua conta já está verificada." };
+
+    if (user.verificationCode !== code) {
+      return { error: "Código incorreto. Verifique seu e-mail e tente novamente." };
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerified: new Date(),
+        verificationCode: null
+      }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error(">>> ERRO VERIFICAÇÃO DASHBOARD:", error);
+    return { error: "Ocorreu um erro no servidor. Tente novamente." };
+  }
+}
