@@ -28,57 +28,25 @@
 
 ## 🖥️ Galeria de Telas (Cyber-Glass Grid)
 
-Para garantir uma leitura limpa e elegante, organizamos as capturas de tela das principais interfaces do sistema em uma grade lado a lado:
+Para garantir uma leitura limpa e elegante, organizamos as capturas de tela das principais interfaces do sistema em uma grade:
 
-<table border="0" cellspacing="0" cellpadding="5" width="100%">
-  <tr>
-    <td width="33.3%" valign="top">
-      <p align="center"><b>🔐 Login Premium (Acesso Estilizado)</b></p>
-      <img src="./public/screenshots/login.png" alt="Login Screen" width="100%" style="border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
-      <p align="small" style="color: #666;"><i>Tela de autenticação imersiva com suporte a cookies nativos e redirecionamentos protegidos.</i></p>
-    </td>
-    <td width="33.3%" valign="top">
-      <p align="center"><b>📝 Cadastro Seguro (Domínio Livre)</b></p>
-      <img src="./public/screenshots/cadastro.png" alt="Register Screen" width="100%" style="border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
-      <p align="small" style="color: #666;"><i>Cadastro otimizado com suporte a qualquer provedor de e-mail e proteção contra robôs.</i></p>
-    </td>
-    <td width="33.3%" valign="top">
-      <p align="center"><b>🎯 Onboarding (Escolha de Interesses)</b></p>
-      <img src="./public/screenshots/escolha.png" alt="Interests Choice" width="100%" style="border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
-      <p align="small" style="color: #666;"><i>Seleção de temas obrigatória na primeira entrada para calibrar o algoritmo de recomendação de notícias.</i></p>
-    </td>
-  </tr>
-  <tr>
-    <td width="33.3%" valign="top">
-      <p align="center"><b>📧 Confirmação por PIN (Segurança)</b></p>
-      <img src="./public/screenshots/interesse.png" alt="Email Verification" width="100%" style="border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
-      <p align="small" style="color: #666;"><i>Validação em duas etapas utilizando PIN numérico temporário enviado por e-mail transacional.</i></p>
-    </td>
-    <td width="33.3%" valign="top">
-      <p align="center"><b>🔮 Feed Cinematic (Visual Cyber-Glass)</b></p>
-      <img src="./public/screenshots/feed.png" alt="Dashboard Feed" width="100%" style="border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
-      <p align="small" style="color: #666;"><i>Dashboard de notícias com grid dinâmico, resumos gerados por Gemini AI e efeito de calor (hot now).</i></p>
-    </td>
-    <td width="33.3%" valign="top">
-      <p align="center"><b>🧑‍💻 Perfil do Usuário (Dados Pessoais)</b></p>
-      <img src="./public/screenshots/usuario0.png" alt="User Profile" width="100%" style="border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
-      <p align="small" style="color: #666;"><i>Painel de controle com suporte a alteração de foto de avatar, e-mail de acesso e senha de segurança.</i></p>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="3" align="center" valign="top">
-      <table border="0" cellspacing="0" cellpadding="0" width="33.3%">
-        <tr>
-          <td valign="top">
-            <p align="center"><b>💡 Alertas de Modificação (UX Inteligente)</b></p>
-            <img src="./public/screenshots/usuario1.png" alt="Profile Save Suggestion" width="100%" style="border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
-            <p align="small" style="color: #666; text-align: center;"><i>Glow-alerts e avisos neon pulsantes que surgem instantaneamente ao alterar inputs não salvos.</i></p>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
+| 🔐 Login Premium (Acesso Estilizado) | 📝 Cadastro Seguro (Domínio Livre) | 🎯 Onboarding (Escolha de Interesses) |
+| :---: | :---: | :---: |
+| ![Login Screen](./public/screenshots/login.png) | ![Register Screen](./public/screenshots/cadastro.png) | ![Interests Choice](./public/screenshots/escolha.png) |
+| *Tela de autenticação imersiva com suporte a cookies nativos e redirecionamentos protegidos.* | *Cadastro otimizado com suporte a qualquer provedor de e-mail e proteção contra robôs.* | *Seleção de temas obrigatória na primeira entrada para calibrar o algoritmo de recomendação de notícias.* |
+
+| 📧 Confirmação por PIN (Segurança) | 🔮 Feed Cinematic (Visual Cyber-Glass) | 🧑‍💻 Perfil do Usuário (Dados Pessoais) |
+| :---: | :---: | :---: |
+| ![Email Verification](./public/screenshots/interesse.png) | ![Dashboard Feed](./public/screenshots/feed.png) | ![User Profile](./public/screenshots/usuario0.png) |
+| *Validação em duas etapas utilizando PIN numérico temporário enviado por e-mail transacional.* | *Dashboard de notícias com grid dinâmico e efeito de calor (hot now).* | *Painel de controle com suporte a alteração de foto de avatar, e-mail de acesso e senha de segurança.* |
+
+<br>
+
+<p align="center"><b>💡 Alertas de Modificação (UX Inteligente)</b></p>
+
+![Profile Save Suggestion](./public/screenshots/usuario1.png)
+
+<p align="center"><i>Glow-alerts e avisos neon pulsantes que surgem instantaneamente ao alterar inputs não salvos.</i></p>
 
 ---
 
