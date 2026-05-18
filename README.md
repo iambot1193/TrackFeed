@@ -147,4 +147,4 @@ Para facilitar a revisão deste projeto pelos avaliadores, preparamos um documen
 👉 **[Clique aqui para acessar o Checklist de Critérios de Avaliação (docs/desafio.md)](./docs/desafio.md)**
 
 ---
-Desenvolvido por Felipe Gonçalves
+Desenvolvido por Felipe Gonçalves.
