@@ -40,14 +40,6 @@ Para garantir uma leitura limpa e elegante, organizamos as capturas de tela das 
 | ![Email Verification](./public/screenshots/escolha.png) | ![Dashboard Feed](./public/screenshots/feed.png) | ![User Profile](./public/screenshots/usuario0.png) |
 | *Segurança em duas etapas via código PIN por e-mail.* | *Dashboard imersivo com efeito Cyber-Glass e Hot News.* | *Edição de dados, senha, avatar e preferências.* |
 
-<br>
-
-<p align="center"><b>💡 Alertas de Alteração (UX Inteligente)</b></p>
-
-![Profile Save Suggestion](./public/screenshots/usuario1.png)
-
-<p align="center"><i>Avisos visuais inteligentes para modificações não salvas no perfil.</i></p>
-
 ---
 
 ## ✨ Funcionalidades "State-of-the-Art"

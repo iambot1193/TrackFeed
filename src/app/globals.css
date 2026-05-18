@@ -215,3 +215,11 @@
 .text-glow-accent {
   text-shadow: 0 0 20px var(--theme-accent);
 }
+
+/* Google reCAPTCHA Challenge Popup Scaling Fix */
+iframe[src*="recaptcha/api2/bframe"] {
+  transform: scale(0.8) !important;
+  -webkit-transform: scale(0.8) !important;
+  transform-origin: center !important;
+  -webkit-transform-origin: center !important;
+}

@@ -184,28 +184,44 @@ export default function DashboardClient({
     };
   }, []);
 
-  const lastTabRef = useRef(currentFilters.tab);
+  const lastFiltersRef = useRef({
+    tab: currentFilters.tab,
+    query: currentFilters.q || currentFilters.query || "",
+    categories: JSON.stringify(currentFilters.categories),
+    lang: JSON.stringify(currentFilters.lang || currentFilters.languages),
+    page: currentFilters.page
+  });
 
   // SINCRONIZAÇÃO CRÍTICA: Atualiza a lista quando os dados do servidor mudam
   useEffect(() => {
-    const tabChanged = lastTabRef.current !== currentFilters.tab;
-    lastTabRef.current = currentFilters.tab;
+    const tabChanged = lastFiltersRef.current.tab !== currentFilters.tab;
+    const qChanged = lastFiltersRef.current.query !== (currentFilters.q || currentFilters.query || "");
+    const categoriesChanged = lastFiltersRef.current.categories !== JSON.stringify(currentFilters.categories);
+    const langChanged = lastFiltersRef.current.lang !== JSON.stringify(currentFilters.lang || currentFilters.languages);
+    const pageChanged = lastFiltersRef.current.page !== currentFilters.page;
 
-    if (currentFilters.page === 1 || tabChanged) {
+    // Atualiza o ref com os novos valores de filtro
+    lastFiltersRef.current = {
+      tab: currentFilters.tab,
+      query: currentFilters.q || currentFilters.query || "",
+      categories: JSON.stringify(currentFilters.categories),
+      lang: JSON.stringify(currentFilters.lang || currentFilters.languages),
+      page: currentFilters.page
+    };
+
+    const filtersChanged = tabChanged || qChanged || categoriesChanged || langChanged;
+
+    if (filtersChanged || pageChanged) {
       setNewsList(initialNews);
-      setVisibleRows(3);
+      if (filtersChanged) {
+        setVisibleRows(3);
+      }
     } else {
-      setNewsList(prev => {
-        const seen = new Set();
-        const combined = [...prev, ...initialNews];
-        return combined.filter(item => {
-          if (seen.has(item.url)) return false;
-          seen.add(item.url);
-          return true;
-        });
-      });
+      // Se os filtros não mudaram (ex: atualização silenciosa por leitura ou favoritar),
+      // atualizamos a lista de notícias mas PRESERVAMOS as linhas extras abertas pelo usuário!
+      setNewsList(initialNews);
     }
-  }, [initialNews, currentFilters.tab, currentFilters.page]);
+  }, [initialNews, currentFilters]);
 
   const updateFilters = (key: string, value: any) => {
     const params = new URLSearchParams(searchParams.toString());
