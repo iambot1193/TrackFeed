@@ -30,23 +30,23 @@
 
 Para garantir uma leitura limpa e elegante, organizamos as capturas de tela das principais interfaces do sistema em uma grade:
 
-| 🔐 Login Premium (Acesso Estilizado) | 📝 Cadastro Seguro (Domínio Livre) | 🎯 Onboarding (Escolha de Interesses) |
+| 🔐 Tela de Login | 📝 Tela de Cadastro | 🎯 Escolha de Interesses |
 | :---: | :---: | :---: |
-| ![Login Screen](./public/screenshots/login.png) | ![Register Screen](./public/screenshots/cadastro.png) | ![Interests Choice](./public/screenshots/escolha.png) |
-| *Tela de autenticação imersiva com suporte a cookies nativos e redirecionamentos protegidos.* | *Cadastro otimizado com suporte a qualquer provedor de e-mail e proteção contra robôs.* | *Seleção de temas obrigatória na primeira entrada para calibrar o algoritmo de recomendação de notícias.* |
+| ![Login Screen](./public/screenshots/login.png) | ![Register Screen](./public/screenshots/cadastro.png) | ![Interests Choice](./public/screenshots/interesse.png) |
+| *Autenticação segura com cookies nativos.* | *Criação de conta com proteção anti-bot.* | *Seleção obrigatória de temas no onboarding.* |
 
-| 📧 Confirmação por PIN (Segurança) | 🔮 Feed Cinematic (Visual Cyber-Glass) | 🧑‍💻 Perfil do Usuário (Dados Pessoais) |
+| 📧 Verificação de E-mail | 🔮 Feed Principal | 🧑‍💻 Perfil do Usuário |
 | :---: | :---: | :---: |
-| ![Email Verification](./public/screenshots/interesse.png) | ![Dashboard Feed](./public/screenshots/feed.png) | ![User Profile](./public/screenshots/usuario0.png) |
-| *Validação em duas etapas utilizando PIN numérico temporário enviado por e-mail transacional.* | *Dashboard de notícias com grid dinâmico e efeito de calor (hot now).* | *Painel de controle com suporte a alteração de foto de avatar, e-mail de acesso e senha de segurança.* |
+| ![Email Verification](./public/screenshots/escolha.png) | ![Dashboard Feed](./public/screenshots/feed.png) | ![User Profile](./public/screenshots/usuario0.png) |
+| *Segurança em duas etapas via código PIN por e-mail.* | *Dashboard imersivo com efeito Cyber-Glass e Hot News.* | *Edição de dados, senha, avatar e preferências.* |
 
 <br>
 
-<p align="center"><b>💡 Alertas de Modificação (UX Inteligente)</b></p>
+<p align="center"><b>💡 Alertas de Alteração (UX Inteligente)</b></p>
 
 ![Profile Save Suggestion](./public/screenshots/usuario1.png)
 
-<p align="center"><i>Glow-alerts e avisos neon pulsantes que surgem instantaneamente ao alterar inputs não salvos.</i></p>
+<p align="center"><i>Avisos visuais inteligentes para modificações não salvas no perfil.</i></p>
 
 ---
 

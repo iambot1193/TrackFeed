@@ -361,7 +361,7 @@ export default function DashboardClient({
     setVerifySuccess(false);
     setShowVerifyModal(true);
     setIsResendingInModal(true);
-    
+
     // Automatically trigger initial PIN email when opening the modal!
     const result = await resendVerificationEmailAction();
     setIsResendingInModal(false);
@@ -381,10 +381,10 @@ export default function DashboardClient({
     }
     setVerifyError("");
     setIsVerifying(true);
-    
+
     const result = await verifyEmailInDashboardAction(verifyCode);
     setIsVerifying(false);
-    
+
     if (result.error) {
       setVerifyError(result.error);
     } else {
@@ -404,7 +404,7 @@ export default function DashboardClient({
     setIsResendingInModal(true);
     const result = await resendVerificationEmailAction();
     setIsResendingInModal(false);
-    
+
     if (result.error) {
       setVerifyError(result.error);
     } else {
@@ -642,7 +642,7 @@ export default function DashboardClient({
                 {/* Nebula Aura Backdrops */}
                 <div className="absolute top-0 left-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute bottom-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
-                
+
                 <div className="flex items-center gap-4 text-left">
                   <div className="h-12 w-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0 shadow-lg animate-pulse">
                     <AlertCircle size={22} className="text-red-400" />
@@ -656,7 +656,7 @@ export default function DashboardClient({
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                  <button 
+                  <button
                     onClick={() => setDismissedAlert(true)}
                     className="h-11 w-11 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500 hover:border-red-400 hover:text-white text-white/60 transition-all flex items-center justify-center cursor-pointer"
                   >
@@ -667,7 +667,7 @@ export default function DashboardClient({
             )}
 
             {(() => {
-              const userInterests = ALL_POSSIBLE_CATEGORIES.filter((cat: any) => 
+              const userInterests = ALL_POSSIBLE_CATEGORIES.filter((cat: any) =>
                 profileCategories.includes(cat.slug)
               );
               const categoriesToRender = userInterests.length > 0 ? userInterests : ALL_POSSIBLE_CATEGORIES;
@@ -684,11 +684,10 @@ export default function DashboardClient({
                         <button
                           key={cat.slug}
                           onClick={() => updateFilters('categories', cat.slug)}
-                          className={`h-9 px-4 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 shrink-0 border cursor-pointer ${
-                            isSelected 
-                              ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.25)]' 
+                          className={`h-9 px-4 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 shrink-0 border cursor-pointer ${isSelected
+                              ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.25)]'
                               : 'bg-white/5 border-white/5 text-zinc-500 hover:text-white hover:bg-white/10'
-                          }`}
+                            }`}
                         >
                           {cat.label}
                         </button>
@@ -704,14 +703,13 @@ export default function DashboardClient({
                 <div className="flex flex-col items-start ml-0">
                   <button
                     onClick={() => setShowHistoryStats(!showHistoryStats)}
-                    className={`h-9 px-4 flex items-center gap-3 text-[9px] font-black uppercase tracking-wider transition-all duration-300 border cursor-pointer ${
-                      showHistoryStats 
-                        ? 'bg-[#0c0814] border-white/10 text-purple-400 rounded-t-[1.2rem] rounded-b-none border-b-0 relative z-20 translate-y-[1px]' 
+                    className={`h-9 px-4 flex items-center gap-3 text-[9px] font-black uppercase tracking-wider transition-all duration-300 border cursor-pointer ${showHistoryStats
+                        ? 'bg-[#0c0814] border-white/10 text-purple-400 rounded-t-[1.2rem] rounded-b-none border-b-0 relative z-20 translate-y-[1px]'
                         : 'bg-white/5 border-white/10 text-white rounded-2xl hover:bg-white/10'
-                    }`}
+                      }`}
                   >
                     <BarChart2 size={12} className={showHistoryStats ? 'text-purple-400 animate-pulse' : 'text-cyan-500'} />
-                    {showHistoryStats 
+                    {showHistoryStats
                       ? (activeTab === 'history' ? 'Ocultar Estatísticas de Leitura' : 'Ocultar Estatísticas de Favoritos')
                       : (activeTab === 'history' ? 'Ver Estatísticas de Leitura' : 'Ver Estatísticas de Favoritos')}
                   </button>
@@ -743,7 +741,7 @@ export default function DashboardClient({
                 <>
                   {/* EXPLORE HERO BANNER: Notícia Grande Destaque no topo da aba Descobrir */}
                   {activeTab === 'explore' && newsList[0] && (
-                    <div 
+                    <div
                       onClick={() => handleArticleClick(newsList[0])}
                       className={`group relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.03] to-white/[0.01] p-6 lg:p-8 flex flex-col lg:flex-row gap-8 shadow-2xl transition-all duration-500 hover:scale-[1.01] hover:border-cyan-500/50 hover:shadow-[0_40px_100px_rgba(6,182,212,0.15)] cursor-pointer mb-10 overflow-hidden relative ${isPending ? 'opacity-30 blur-[2px]' : ''}`}
                     >
@@ -751,11 +749,11 @@ export default function DashboardClient({
                       <div className="absolute inset-0 bg-grid-dots opacity-[0.1] mix-blend-overlay pointer-events-none" />
                       <div className="absolute top-[-50%] right-[-20%] w-[50vw] h-[50vw] bg-cyan-500/[0.04] rounded-full blur-[100px] pointer-events-none group-hover:bg-cyan-500/[0.07] transition-colors" />
                       <div className="absolute bottom-[-50%] left-[-20%] w-[50vw] h-[50vw] bg-purple-500/[0.03] rounded-full blur-[100px] pointer-events-none" />
-                      
+
                       {/* Image container */}
                       <div className="w-full lg:w-1/2 aspect-[16/10] lg:aspect-auto rounded-2xl overflow-hidden relative border border-white/5 bg-zinc-950 shrink-0 min-h-[220px] lg:min-h-[300px]">
-                        <img 
-                          src={newsList[0].urlToImage || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800"} 
+                        <img
+                          src={newsList[0].urlToImage || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800"}
                           alt={newsList[0].title}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
@@ -792,16 +790,15 @@ export default function DashboardClient({
                             <ArrowRight size={14} className="transition-transform group-hover:translate-x-2 duration-300" />
                           </div>
 
-                          <button 
+                          <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleFavorite(newsList[0]);
                             }}
-                            className={`h-10 w-10 rounded-xl border transition-all flex items-center justify-center cursor-pointer ${
-                              favorites.includes(newsList[0].url)
+                            className={`h-10 w-10 rounded-xl border transition-all flex items-center justify-center cursor-pointer ${favorites.includes(newsList[0].url)
                                 ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
                                 : 'bg-white/5 border-white/10 text-white/40 hover:text-white hover:bg-white/10'
-                            }`}
+                              }`}
                           >
                             <BookmarkIcon size={14} fill={favorites.includes(newsList[0].url) ? "currentColor" : "none"} />
                           </button>
@@ -1034,7 +1031,7 @@ export default function DashboardClient({
       {/* MODAL VERIFIQUE SEU EMAIL */}
       {showVerifyModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
-          
+
           {/* LOCAL MODAL TOAST NOTIFICATION */}
           {modalNotify && (
             <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[200] px-8 py-4 rounded-[2rem] border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-2xl shadow-emerald-500/10 backdrop-blur-2xl flex items-center gap-4 animate-in slide-in-from-top-8 duration-500">
@@ -1062,7 +1059,7 @@ export default function DashboardClient({
                   Verificação Feita com Sucesso
                 </h3>
                 <p className="text-zinc-400 font-bold text-[10px] uppercase tracking-widest leading-relaxed">
-                  Seu e-mail foi confirmado! <br/>
+                  Seu e-mail foi confirmado! <br />
                   <span className="text-emerald-400/80 animate-pulse">Retornando ao perfil...</span>
                 </p>
               </div>
@@ -1076,7 +1073,7 @@ export default function DashboardClient({
                   </div>
                   <h3 className="text-3xl font-black tracking-tighter uppercase italic bg-gradient-to-br from-white via-zinc-100 to-purple-400/50 bg-clip-text text-transparent">Verifique seu E-mail</h3>
                   <p className="text-zinc-200 font-black uppercase text-[10px] tracking-[0.2em] max-w-xs mx-auto leading-relaxed">
-                    Enviamos um código de 6 dígitos para o endereço: <br/>
+                    Enviamos um código de 6 dígitos para o endereço: <br />
                     <span className="text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full mt-2 inline-block border border-purple-500/20">Dono do Site / Desenvolvedor</span>
                   </p>
                 </div>
@@ -1091,15 +1088,15 @@ export default function DashboardClient({
 
                   <div className="space-y-4">
                     <div className="flex justify-center">
-                      <input 
-                        type="text" 
-                        value={verifyCode} 
+                      <input
+                        type="text"
+                        value={verifyCode}
                         onChange={(e) => {
                           const val = e.target.value.replace(/\D/g, "").slice(0, 6);
                           setVerifyCode(val);
                         }}
                         placeholder="0 0 0 0 0 0"
-                        className="w-full h-16 text-center text-3xl font-black tracking-[0.5em] bg-black/40 border border-zinc-800/50 text-white focus:border-purple-500/50 rounded-2xl transition-all shadow-inner placeholder:text-zinc-800 focus:outline-none" 
+                        className="w-full h-16 text-center text-3xl font-black tracking-[0.5em] bg-black/40 border border-zinc-800/50 text-white focus:border-purple-500/50 rounded-2xl transition-all shadow-inner placeholder:text-zinc-800 focus:outline-none"
                         required
                         autoFocus
                       />
@@ -1107,8 +1104,8 @@ export default function DashboardClient({
                     <p className="text-[10px] text-center text-zinc-300 uppercase tracking-widest font-black italic">Digite o código de confirmação</p>
                   </div>
 
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={isVerifying || verifyCode.length < 6}
                     className="w-full h-14 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:brightness-110 text-white font-black uppercase text-[11px] tracking-[0.2em] shadow-[0_20px_40px_rgba(147,51,234,0.3)] transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 select-none rounded-2xl cursor-pointer"
                   >
@@ -1118,7 +1115,7 @@ export default function DashboardClient({
                 </form>
 
                 <div className="text-center pt-2">
-                  <button 
+                  <button
                     type="button"
                     onClick={handleResendInModal}
                     disabled={isResendingInModal}
@@ -1134,26 +1131,23 @@ export default function DashboardClient({
       )}
 
       {/* PREMIUM GLASS TOAST NOTIFICATION */}
-      <div 
-        className={`fixed bottom-8 right-8 z-[200] flex items-center gap-4 px-6 py-4 rounded-2xl bg-zinc-950/95 border backdrop-blur-xl shadow-2xl transition-all duration-500 transform ${
-          toast.show 
-            ? 'translate-y-0 opacity-100 scale-100' 
+      <div
+        className={`fixed bottom-8 right-8 z-[200] flex items-center gap-4 px-6 py-4 rounded-2xl bg-zinc-950/95 border backdrop-blur-xl shadow-2xl transition-all duration-500 transform ${toast.show
+            ? 'translate-y-0 opacity-100 scale-100'
             : 'translate-y-4 opacity-0 scale-95 pointer-events-none'
-        } ${
-          toast.type === 'success' 
-            ? 'border-emerald-500/30 shadow-emerald-500/10' 
-            : toast.type === 'error' 
-              ? 'border-red-500/30 shadow-red-500/10' 
+          } ${toast.type === 'success'
+            ? 'border-emerald-500/30 shadow-emerald-500/10'
+            : toast.type === 'error'
+              ? 'border-red-500/30 shadow-red-500/10'
               : 'border-cyan-500/30 shadow-cyan-500/10'
-        }`}
+          }`}
       >
-        <div className={`h-8 w-8 rounded-xl flex items-center justify-center border ${
-          toast.type === 'success' 
-            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-            : toast.type === 'error' 
-              ? 'bg-red-500/10 border-red-500/20 text-red-400' 
+        <div className={`h-8 w-8 rounded-xl flex items-center justify-center border ${toast.type === 'success'
+            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+            : toast.type === 'error'
+              ? 'bg-red-500/10 border-red-500/20 text-red-400'
               : 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'
-        }`}>
+          }`}>
           {toast.type === 'success' ? (
             <ShieldCheck size={18} />
           ) : toast.type === 'error' ? (
@@ -1166,7 +1160,7 @@ export default function DashboardClient({
           <p className="text-xs font-black text-white uppercase tracking-wider">{toast.type === 'success' ? 'Sucesso' : toast.type === 'error' ? 'Erro' : 'Notificação'}</p>
           <p className="text-[11px] text-white/60 font-semibold mt-0.5">{toast.message}</p>
         </div>
-        <button 
+        <button
           onClick={() => setToast(prev => ({ ...prev, show: false }))}
           className="text-white/40 hover:text-white transition-colors"
         >
@@ -1284,14 +1278,14 @@ function ProfileSection({
           <h2 className="text-3xl font-black text-white tracking-tighter">{user.name}</h2>
           {userIsVerifiedState ? (
             <div className="flex items-center gap-2 text-emerald-400 text-[10px] font-black uppercase tracking-widest mt-1.5">
-              <ShieldCheck size={12} className="text-emerald-400" /> 
+              <ShieldCheck size={12} className="text-emerald-400" />
               E-mail Verificado
             </div>
           ) : (
             <div className="flex items-center gap-2 text-rose-400 text-[10px] font-black uppercase tracking-widest mt-1.5 flex-wrap">
-              <AlertCircle size={12} className="text-rose-400 animate-pulse" /> 
+              <AlertCircle size={12} className="text-rose-400 animate-pulse" />
               E-mail não verificado
-              <button 
+              <button
                 onClick={handleOpenVerifyModal}
                 className="ml-2 px-2.5 py-1 rounded-lg bg-cyan-500 text-black font-black uppercase text-[8px] tracking-wider flex items-center justify-center hover:bg-cyan-400 transition-all shadow-lg hover:shadow-cyan-500/20 active:scale-95 cursor-pointer border-none"
               >
@@ -1386,14 +1380,14 @@ function NewsSkeletonGrid({ gridColumns }: { gridColumns: number }) {
   return (
     <div className={`grid grid-cols-1 md:grid-cols-2 ${gridColumns === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-8 animate-in fade-in duration-500`}>
       {[...Array(6)].map((_, i) => (
-        <div 
-          key={i} 
+        <div
+          key={i}
           className="h-[480px] rounded-[2.5rem] bg-white/5 border border-white/5 p-8 flex flex-col justify-between animate-pulse"
         >
           <div className="space-y-6">
             {/* Imagem Placeholder */}
             <div className="h-48 w-full bg-white/5 rounded-[2rem]" />
-            
+
             {/* Linha Categoria / Data */}
             <div className="flex gap-4">
               <div className="h-4 w-16 bg-white/5 rounded-full" />

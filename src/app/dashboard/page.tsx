@@ -40,7 +40,7 @@ export default async function DashboardPage({
   }
 
   if (!user) redirect("/");
-  
+
   // LIMPEZA DE CATEGORIA OBSOLETA (Migration silenciosa)
   const hasProgramming = user.preferences.some(p => p.categoryName.toLowerCase() === 'programming');
   if (hasProgramming) {
@@ -48,7 +48,7 @@ export default async function DashboardPage({
       where: { userId, categoryName: { equals: 'programming', mode: 'insensitive' } }
     });
     // Recarrega o usuário para refletir a mudança
-    return redirect("/dashboard"); 
+    return redirect("/dashboard");
   }
 
   // REGRA DE OURO: Se não tem interesses, não entra na Dashboard!
@@ -66,7 +66,7 @@ export default async function DashboardPage({
 
   let news: NewsArticle[] = [];
   let historyStats: any = null;
-  
+
   if (tab === 'favs') {
     const favsWithDetails = await Promise.all(favorites.map(async (f) => {
       const cached = await prisma.cachedArticle.findUnique({ where: { url: f.url } });
@@ -77,7 +77,7 @@ export default async function DashboardPage({
         urlToImage: f.imageUrl || "",
         publishedAt: f.publishedAt?.toISOString() || f.savedAt.toISOString(),
         source: { name: f.source || "Fonte" },
-        category: cached?.category || "general", 
+        category: cached?.category || "general",
         language: cached?.language || "pt"
       } as NewsArticle;
     }));
@@ -92,7 +92,7 @@ export default async function DashboardPage({
       const cat = article.category || "general";
       stats.categories[cat] = (stats.categories[cat] || 0) + 1;
     }
-    
+
     const langFiltered = favsWithDetails.filter(article => languages.includes(article.language || "pt"));
 
     if (catParam) {
@@ -139,7 +139,7 @@ export default async function DashboardPage({
           urlToImage: h.imageUrl || cached?.imageUrl || "",
           publishedAt: h.viewedAt.toISOString(),
           source: { name: cached?.source || "Radar" },
-          category: cat, 
+          category: cat,
           language: cached?.language || "pt"
         } as NewsArticle);
       }
@@ -181,8 +181,8 @@ export default async function DashboardPage({
   const apiStatus = await getApiStatus();
 
   return (
-    <DashboardClient 
-      initialNews={news} 
+    <DashboardClient
+      initialNews={news}
       historyStats={historyStats}
       user={{
         name: user.name || "Usuário",
