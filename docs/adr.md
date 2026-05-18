@@ -33,9 +33,7 @@ Este documento registra as decisões técnicas tomadas durante o desenvolvimento
 
 ## ADR 07: Categorização Semântica com Inteligência Artificial
 - **Contexto**: O sistema de palavras-chave (`string.includes`) gera falsos negativos em manchetes abstratas.
-- **Decisão**: Integrar dois modelos **Google Gemini** para tarefas distintas:
-  - **`gemini-2.0-flash`**: Classificação semântica em lote de notícias (função `categorizeBatchWithAI` em `src/lib/news.ts`).
-  - **`gemini-1.5-flash`**: Resumo de notícias individuais sob demanda (função `summarizeArticle`).
+- **Decisão**: Integrar o modelo **Google Gemini 2.0 Flash** para classificação semântica em lote de notícias (função `categorizeWithGeminiBatch` em `src/lib/news.ts`).
 - **Motivo**: Custo virtualmente nulo para alta precisão, garantindo um feed "Descobrir" perfeitamente taggeado com cores. A classificação roda uma única vez e é persistida no banco.
 
 ## ADR 08: Confiança na API e Regras Puristas

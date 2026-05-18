@@ -139,6 +139,27 @@ export default function DashboardClient({
     }
   }, [toast.show]);
 
+  // AI Smart Digest states
+  const [activeSummary, setActiveSummary] = useState<{ title: string; summary: string } | null>(null);
+  const [loadingSummaryUrl, setLoadingSummaryUrl] = useState<string | null>(null);
+
+  const handleSummarize = async (article: NewsArticle) => {
+    if (loadingSummaryUrl) return;
+    setLoadingSummaryUrl(article.url);
+    try {
+      const res = await summarizeNewsAction(article.title, article.description || "");
+      if (res.error) {
+        showToast(res.error, "error");
+      } else if (res.summary) {
+        setActiveSummary({ title: article.title, summary: res.summary });
+      }
+    } catch (err) {
+      showToast("Falha ao gerar resumo com IA.", "error");
+    } finally {
+      setLoadingSummaryUrl(null);
+    }
+  };
+
   const [dismissedAlert, setDismissedAlert] = useState(false);
 
   const mainPopoverRef = useRef<HTMLDivElement>(null);

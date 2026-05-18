@@ -85,10 +85,8 @@ Para garantir uma leitura limpa e elegante, organizamos as capturas de tela das 
 ## ✨ Funcionalidades "State-of-the-Art"
 
 - **Visual Cinematic Cyber-Glass**: Interface imersiva com efeitos de desfoque, gradientes em movimento e profundidade 3D (parallax) que reage ao mouse.
-- **AI Smart Digest**: Resumos instantâneos de notícias em 3 tópicos gerados por IA (Google Gemini Flash-Latest), economizando tempo e trazendo clareza imediata.
-- **Modo Imersivo de Leitura**: Um ambiente livre de distrações para leitura cinematográfica das notícias no radar.
 - **Heat System (Hot Now)**: Notícias quentes ganham indicadores visuais de "calor" (glow e animações pulsantes).
-- **Categorização Híbrida**: Motor que combina regras heurísticas com classificação semântica via Gemini AI.
+- **Categorização Híbrida por IA**: Motor que combina regras heurísticas com classificação semântica via Google Gemini 2.0 Flash.
 - **Três Modos Editoriais**:
   - **Gemini (Home)**: Layout equilibrado e editorial.
   - **ChatGPT (Explore)**: Foco em descoberta com grandes destaques visuais.
@@ -100,7 +98,7 @@ Para garantir uma leitura limpa e elegante, organizamos as capturas de tela das 
 
 - **Framework**: [Next.js 15+](https://nextjs.org/) (App Router rodando sobre Webpack estável)
 - **Database**: [PostgreSQL](https://www.postgresql.org/) com [Prisma ORM](https://www.prisma.io/)
-- **AI Engine**: [Google Gemini 1.5/2.0 Flash](https://ai.google.dev/)
+- **AI Engine**: [Google Gemini 2.0 Flash](https://ai.google.dev/) (Classificação semântica em lote)
 - **Estilização**: [Tailwind CSS](https://tailwindcss.com/)
 - **Transações de E-mail**: [Resend API](https://resend.com/) (Com redirecionamentos dinâmicos de sandbox e suporte a qualquer domínio externo)
 - **Icons**: [Lucide React](https://lucide.dev/)
@@ -169,6 +167,14 @@ Para colocar o **TrackFeed** ativo no ar na nuvem (Vercel + Supabase):
 1. Conecte o seu repositório do GitHub diretamente na [Vercel](https://vercel.com).
 2. Adicione **todas** as variáveis do arquivo `.env` (Seção A e Seção B) nas configurações de **Environment Variables** do projeto na Vercel.
 3. A Vercel executará o comando de build (`npm run build`) que gera automaticamente o cliente Prisma, aplica as otimizações do Next.js e disponibiliza o seu site online em segundos!
+
+---
+
+## 🎯 Avaliação Técnica e Requisitos
+
+Para facilitar a revisão deste projeto pelos avaliadores, preparamos um documento de mapeamento detalhado. Nele, cruzamos todos os critérios exigidos no desafio com os arquivos exatos onde foram implementados na nossa arquitetura.
+
+👉 **[Clique aqui para acessar o Checklist de Critérios de Avaliação (docs/desafio.md)](./docs/desafio.md)**
 
 ---
 Desenvolvido por Felipe Gonçalves

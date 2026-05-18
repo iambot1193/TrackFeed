@@ -9,9 +9,8 @@ O TrackFeed aboliu o uso de API Routes (REST `/api/*`) tradicionais em favor de 
 Responsável pela lógica pesada de integração e caching (NewsAPI, GNews, The Guardian, Gemini AI e Prisma). 
 *Estas são funções executadas puramente no lado do servidor:*
 
-*   **`fetchNewsWithFilters(options)`**: Função Core do motor. Executa a orquestração do backup triplo (failover) e categorização semântica via modelo de Inteligência Artificial Google Gemini (1.5 Flash).
+*   **`fetchNewsWithFilters(options)`**: Função Core do motor. Executa a orquestração do backup triplo (failover) e categorização semântica via modelo de Inteligência Artificial Google Gemini.
 *   **`getApiStatus()`**: Consulta o banco e retorna o status atualizado e cotas restantes da NewsAPI e GNews.
-*   **`summarizeArticle(title, description)`**: Conecta-se à API do Gemini para gerar um resumo da notícia sob demanda.
 
 ---
 
@@ -28,7 +27,6 @@ Lida com todas as interações executadas pelo cliente autenticado. Todas as aç
 *   **`getApiStatusAction()`**: Ação envelopadora usada pelo client-side para atualizar cotas na UI em tempo real.
 *   **`logout()`**: Remove o cookie de sessão do navegador (`userId`) e desconecta o usuário.
 *   **`resendVerificationEmailAction()`**: Gera um novo PIN numérico de 6 dígitos e despacha para o e-mail do usuário via Resend.
-*   **`summarizeNewsAction(title, description)`**: Ação envelopadora que permite ao cliente requisitar resumos de notícias por Inteligência Artificial.
 *   **`verifyEmailInDashboardAction(code)`**: Confirma o PIN de verificação de conta digitado pelo usuário diretamente no modal da dashboard.
 
 ---
