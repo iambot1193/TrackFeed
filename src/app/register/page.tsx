@@ -137,7 +137,7 @@ export default function RegisterPage() {
 
             <Button 
               type="submit" 
-              disabled={isPending || (process.env.NODE_ENV === "production" && SITE_KEY && !captchaToken)}
+              disabled={isPending || (process.env.NODE_ENV === "production" && !!SITE_KEY && !captchaToken)}
               className="w-full h-10 bg-white text-black hover:bg-purple-600 hover:text-white font-black uppercase text-[9px] tracking-[0.2em] shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 rounded-xl group overflow-hidden mt-1"
             >
               <div className="flex items-center gap-3">

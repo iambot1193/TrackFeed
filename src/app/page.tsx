@@ -17,7 +17,7 @@ function LoginContent() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [state, formAction, isPending] = useActionState(loginUser, null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [particles, setParticles] = useState<{top: string, left: string, delay: string, opacity: number}[]>([]);
+  const [particles, setParticles] = useState<{ top: string, left: string, delay: string, opacity: number }[]>([]);
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
 
@@ -26,7 +26,7 @@ function LoginContent() {
       setMousePos({ x: (e.clientX / window.innerWidth - 0.5) * 20, y: (e.clientY / window.innerHeight - 0.5) * 20 });
     };
     window.addEventListener('mousemove', handleMouseMove);
-    
+
     const newParticles = [...Array(30)].map(() => ({
       top: `${Math.random() * 100}%`,
       left: `${Math.random() * 100}%`,
@@ -34,16 +34,16 @@ function LoginContent() {
       opacity: Math.random() * 0.5
     }));
     setParticles(newParticles);
-    
+
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 
   return (
-    <div className="flex h-screen items-center justify-center bg-[#050505] p-6 relative overflow-hidden selection:bg-purple-500/30">
+    <div className="flex min-h-screen items-center justify-center bg-[#050505] p-6 relative overflow-hidden selection:bg-purple-500/30">
       <div className="fixed inset-0 bg-noise opacity-[0.03] pointer-events-none z-[100]" />
-      
+
       {/* Cinematic Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute inset-0 bg-grid-dots opacity-[0.2] mix-blend-overlay" />
@@ -60,89 +60,89 @@ function LoginContent() {
         <ThemeToggle />
       </div>
 
-      <Card className="w-full max-w-[400px] border-white/5 bg-white/[0.03] backdrop-blur-[60px] text-foreground relative z-10 shadow-[0_80px_150px_-30px_rgba(0,0,0,1)] rounded-[2rem] border-t-white/10 p-1">
-        <div className="bg-black/20 rounded-[inherit] p-5 lg:p-6">
-          <CardHeader className="space-y-2.5 text-center pt-1 pb-4">
+      <Card className="w-full max-w-[420px] border-white/5 bg-white/[0.03] backdrop-blur-[60px] text-foreground relative z-10 shadow-[0_80px_150px_-30px_rgba(0,0,0,1)] rounded-[2.5rem] overflow-hidden border-t-white/10 p-1.5">
+        <div className="bg-black/20 rounded-[inherit] p-6 lg:p-8">
+          <CardHeader className="space-y-4 text-center pt-2 pb-6">
             <div className="flex justify-center">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center font-black text-sm text-white shadow-[0_0_20px_rgba(147,51,234,0.3)] animate-in zoom-in duration-1000">
+              <div className="h-14 w-14 rounded-[1.25rem] bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center font-black text-lg text-white shadow-[0_0_30px_rgba(147,51,234,0.3)] animate-in zoom-in duration-1000">
                 TF
               </div>
             </div>
-            <div className="space-y-0.5">
-              <CardTitle className="text-2xl font-black tracking-tighter uppercase italic text-white">TrackFeed</CardTitle>
-              <div className="flex items-center justify-center gap-2 text-[7px] font-black uppercase tracking-[0.3em] text-zinc-500">
-                <ShieldCheck size={10} className="text-purple-500" /> Secure Immersive Access
+            <div className="space-y-1">
+              <CardTitle className="text-3xl font-black tracking-tighter uppercase italic text-white">TrackFeed</CardTitle>
+              <div className="flex items-center justify-center gap-2 text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500">
+                <ShieldCheck size={12} className="text-purple-500" /> Secure Immersive Access
               </div>
             </div>
           </CardHeader>
-          
-          <form action={formAction} className="space-y-3">
+
+          <form action={formAction} className="space-y-5">
             {errorParam === "db_connection" && (
-              <div className="flex items-center gap-3 p-3 text-[9px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl animate-in fade-in slide-in-from-top-4 italic">
-                <AlertCircle size={14} />
+              <div className="flex items-center gap-3 p-4 text-[9px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl animate-in fade-in slide-in-from-top-4 italic">
+                <AlertCircle size={16} />
                 FALHA DE CONEXÃO: O Banco de Dados não respondeu a tempo. Tente novamente.
               </div>
             )}
 
             {state?.error && (
-              <div className="flex items-center gap-3 p-3 text-[9px] font-black uppercase tracking-widest text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl animate-in fade-in slide-in-from-top-4 italic">
-                <AlertCircle size={14} />
+              <div className="flex items-center gap-3 p-4 text-[9px] font-black uppercase tracking-widest text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl animate-in fade-in slide-in-from-top-4 italic">
+                <AlertCircle size={16} />
                 {state.error}
               </div>
             )}
 
-            <div className="space-y-1 group">
+            <div className="space-y-2 group">
               <Label className="text-zinc-500 font-black uppercase text-[8px] tracking-[0.2em] px-2 group-focus-within:text-purple-400 transition-all">Credenciais</Label>
-              <Input 
-                id="identifier" name="identifier" type="text" 
+              <Input
+                id="identifier" name="identifier" type="text"
                 defaultValue={state?.identifier || ""}
-                placeholder="E-mail ou Usuário" required 
-                className="h-10 bg-white/[0.03] border-white/5 text-white focus-visible:ring-purple-500/30 rounded-xl text-xs font-bold placeholder:text-zinc-700 transition-all shadow-inner px-4" 
+                placeholder="E-mail ou Usuário" required
+                className="h-12 bg-white/[0.03] border-white/5 text-white focus-visible:ring-purple-500/30 rounded-xl text-xs font-bold placeholder:text-zinc-700 transition-all shadow-inner px-4"
               />
             </div>
-            
-            <div className="space-y-1 group">
+
+            <div className="space-y-2 group">
               <div className="flex items-center justify-between px-2">
                 <Label className="text-zinc-500 font-black uppercase text-[8px] tracking-[0.2em] group-focus-within:text-purple-400 transition-all">Segurança</Label>
                 <Link href="/forgot-password" size="sm" className="text-[8px] font-black text-zinc-600 hover:text-white transition-all uppercase tracking-widest">Esqueceu?</Link>
               </div>
               <div className="relative">
-                <Input 
+                <Input
                   id="password" name="password" type={showPassword ? "text" : "password"} required
                   placeholder="Sua senha secreta"
-                  className="peer h-10 bg-white/[0.03] border-white/5 text-white focus-visible:ring-purple-500/30 pr-12 rounded-xl text-xs font-bold placeholder:text-zinc-700 transition-all shadow-inner px-4" 
+                  className="peer h-12 bg-white/[0.03] border-white/5 text-white focus-visible:ring-purple-500/30 pr-12 rounded-xl text-xs font-bold placeholder:text-zinc-700 transition-all shadow-inner px-4"
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-all active:scale-90 outline-none p-1">
-                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
             {process.env.NODE_ENV === "production" && SITE_KEY && (
-              <div className="flex justify-center py-1 scale-90 select-none overflow-hidden rounded-xl bg-black/40 p-2 border border-white/5">
+              <div className="flex justify-center py-1.5 scale-90 select-none overflow-hidden rounded-xl bg-black/40 p-3 border border-white/5">
                 <ReCAPTCHA sitekey={SITE_KEY} onChange={(token) => setCaptchaToken(token)} theme="dark" />
                 <input type="hidden" name="g-recaptcha-response" value={captchaToken || ""} />
               </div>
             )}
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isPending || (process.env.NODE_ENV === "production" && SITE_KEY && !captchaToken)}
-              className="w-full h-10 bg-white text-black hover:bg-purple-600 hover:text-white font-black uppercase text-[9px] tracking-[0.2em] shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 rounded-xl group overflow-hidden"
+              className="w-full h-12 bg-white text-black hover:bg-purple-600 hover:text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 rounded-xl group overflow-hidden"
             >
               {isPending ? (
-                <div className="flex items-center gap-2"><Loader2 className="animate-spin" size={14} /><span>Sincronizando...</span></div>
+                <div className="flex items-center gap-2"><Loader2 className="animate-spin" size={16} /><span>Sincronizando...</span></div>
               ) : (
                 <div className="flex items-center gap-3">
                   <span>Entrar no Radar</span>
-                  <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+                  <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
                 </div>
               )}
             </Button>
           </form>
 
-          <CardFooter className="flex flex-col space-y-3 text-center mt-4 pt-3 border-t border-white/5 px-0">
-            <p className="text-zinc-500 text-[8px] font-black uppercase tracking-[0.15em]">
+          <CardFooter className="flex flex-col space-y-3 text-center mt-6 pt-4 border-t border-white/5 px-0">
+            <p className="text-zinc-500 text-[9px] font-black uppercase tracking-[0.15em]">
               Novo por aqui?{" "}
               <Link href="/register" className="text-white hover:text-purple-400 font-black transition-all hover:underline underline-offset-4">
                 Criar conta
