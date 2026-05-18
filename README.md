@@ -117,6 +117,13 @@ Para colocar o **TrackFeed** ativo no ar na nuvem (Vercel + Supabase):
 2. Acesse a aba **API Keys**, gere uma nova chave de acesso e configure a variável `RESEND_API_KEY` na Vercel.
 3. Defina a variável `RESEND_SANDBOX_EMAIL` para o seu e-mail cadastrado na conta caso esteja testando no ambiente gratuito de Sandbox. Em produção (com domínio verificado), remova essa variável para entregar os e-mails diretamente aos usuários!
 
+> [!WARNING]
+> **ATENÇÃO AO MODO SANDBOX DO RESEND!**
+> Se a sua conta da Resend for nova ou gratuita (sem domínio próprio verificado), a Resend **SÓ permite enviar e-mails para o e-mail cadastrado na sua própria conta**. 
+> Para que os testes funcionem perfeitamente na Vercel, você **DEVE** adicionar a variável `RESEND_SANDBOX_EMAIL` nas variáveis de ambiente da Vercel apontando para o seu e-mail da Resend. Caso contrário, qualquer tentativa de cadastro com outro e-mail falhará com erro de API!
+>
+> **Cuidado para não confundir as chaves!** A `RESEND_API_KEY` deve começar obrigatoriamente com `re_`. Não a confunda com a chave secreta do reCAPTCHA (`6Lff...`).
+
 ### 3. Proteção Anti-Bot (Google reCAPTCHA v2)
 1. Acesse o console do [Google reCAPTCHA](https://www.google.com/recaptcha/admin).
 2. Registre um novo site escolhendo **reCAPTCHA v2 (caixa de seleção "Não sou um robô")**.
@@ -125,8 +132,11 @@ Para colocar o **TrackFeed** ativo no ar na nuvem (Vercel + Supabase):
 
 ### 4. Deploy no Servidor (Vercel)
 1. Conecte o seu repositório do GitHub diretamente na [Vercel](https://vercel.com).
-2. Adicione **todas** as variáveis do arquivo `.env` (Seção A e Seção B) nas configurações de **Environment Variables** do projeto na Vercel.
-3. A Vercel executará o comando de build (`npm run build`) que gera automaticamente o cliente Prisma, aplica as otimizações do Next.js e disponibiliza o seu site online em segundos!
+2. > [!IMPORTANT]
+   > **Criação Obrigatória das Variáveis de Ambiente na Vercel:**
+   > Para que as funcionalidades do site (como envio de e-mails via Resend, classificação por IA via Gemini e reCAPTCHA) funcionem no deploy automático, você **DEVE** cadastrar manualmente **todas** as variáveis do seu `.env` na aba **Settings > Environment Variables** no painel da Vercel. Se elas não forem criadas lá, o site apresentará falhas nas telas de login, cadastro e verificação!
+3. Adicione **todas** as variáveis do arquivo `.env` (Seção A e Seção B) nas configurações de **Environment Variables** do projeto na Vercel.
+4. A Vercel executará o comando de build (`npm run build`) que gera automaticamente o cliente Prisma, aplica as otimizações do Next.js e disponibiliza o seu site online em segundos!
 
 ---
 

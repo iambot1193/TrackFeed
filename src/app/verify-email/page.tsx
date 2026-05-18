@@ -106,7 +106,7 @@ function VerifyEmailContent() {
               </div>
               <CardTitle className="text-3xl font-black tracking-tighter uppercase italic bg-gradient-to-br from-white via-zinc-100 to-purple-400/50 bg-clip-text text-transparent">Verifique seu E-mail</CardTitle>
               <CardDescription className="text-zinc-200 font-black uppercase text-[10px] tracking-[0.2em] max-w-xs mx-auto leading-relaxed">
-                Enviamos um código de 6 dígitos para o endereço: <br/>
+                Enviamos um código de 6 dígitos para o endereço: <br />
                 <span className="text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full mt-2 inline-block border border-purple-500/20">Dono do Site / Desenvolvedor</span>
               </CardDescription>
             </CardHeader>
