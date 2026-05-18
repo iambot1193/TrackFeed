@@ -399,9 +399,8 @@ export default function DashboardClient({
     }
 
     const passwordSchema = z.string()
-      .min(8, "A nova senha deve ter no mínimo 8 caracteres")
-      .regex(/[A-Za-z]/, "A nova senha deve conter pelo menos uma letra")
-      .regex(/[0-9]/, "A nova senha deve conter pelo menos um número");
+      .min(6, "A nova senha deve ter no mínimo 6 caracteres")
+      .max(50, "A nova senha é muito longa");
 
     const result = passwordSchema.safeParse(newPassword);
     if (!result.success) {
@@ -866,9 +865,15 @@ export default function DashboardClient({
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="bg-black/40 border-white/10 text-white h-14 rounded-2xl focus:border-cyan-500/50"
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder="Mínimo 6 caracteres"
                 />
               </div>
+              {newPassword.length > 0 && (
+                <div className="p-3 text-[9px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-xl animate-pulse italic flex items-center gap-2">
+                  <ShieldCheck size={14} className="text-cyan-400" />
+                  💡 CLIQUE EM "CONFIRMAR" ABAIXO PARA REDEFINIR E SALVAR SUA NOVA SENHA!
+                </div>
+              )}
             </div>
 
             <div className="flex gap-4 pt-4">
@@ -915,6 +920,12 @@ export default function DashboardClient({
                   placeholder="novo.email@exemplo.com"
                 />
               </div>
+              {newEmail.length > 0 && (
+                <div className="p-3 text-[9px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-xl animate-pulse italic flex items-center gap-2">
+                  <ShieldCheck size={14} className="text-cyan-400" />
+                  💡 CLIQUE EM "CONFIRMAR" ABAIXO PARA ALTERAR E SALVAR SEU NOVO E-MAIL!
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label className="text-white/60 font-black text-[10px] uppercase">Senha Atual</Label>
@@ -1288,6 +1299,12 @@ function ProfileSection({
                   placeholder="Seu nome"
                 />
               </div>
+              {(profileName !== user.name || profileAvatarUrl !== (user.avatarUrl || "")) && (
+                <div className="p-3 text-[9px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-xl animate-pulse italic flex items-center gap-2">
+                  <ShieldCheck size={14} className="text-cyan-400" />
+                  💡 VOCÊ ALTEROU SEUS DADOS! CLIQUE EM "SALVAR ALTERAÇÕES" ABAIXO PARA APLICAR.
+                </div>
+              )}
               <div className="pt-2 grid grid-cols-2 gap-3">
                 <Button
                   type="button"
@@ -1333,7 +1350,7 @@ function ProfileSection({
       <div className="p-6 md:p-8 rounded-[2rem] bg-red-500/5 border border-red-500/10 hover:border-red-500/20 transition-all space-y-6 flex flex-col">
         <h3 className="text-lg font-black text-red-500 uppercase tracking-widest italic flex items-center gap-3">
           <AlertCircle size={20} className="text-red-500" />
-          Zona de Perigo
+          Deletar Conta
         </h3>
         <p className="text-[11px] text-white/40 font-bold leading-relaxed">ATENÇÃO TOTAL: Esta ação excluirá permanentemente o seu perfil, favoritos e histórico do TrackFeed de forma irreversível.</p>
         <div className="pt-2">

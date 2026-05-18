@@ -82,7 +82,7 @@ export default function InterestsPage() {
 
       <header className="p-6 lg:p-8 flex items-center justify-between relative z-50">
         <div className="flex items-center gap-3 group cursor-pointer">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-black text-white shadow-2xl transition-transform group-hover:scale-110">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center font-black text-white shadow-[0_0_20px_rgba(147,51,234,0.35)] transition-transform group-hover:scale-110">
             TF
           </div>
           <span className="text-xl font-black italic tracking-tighter text-white">TrackFeed</span>

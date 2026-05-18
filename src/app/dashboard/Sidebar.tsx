@@ -19,7 +19,7 @@ export function Sidebar({ activeTab, updateFilters, isSidebarOpen, setSidebarOpe
     <aside className={`fixed left-0 top-0 bottom-0 z-[600] w-72 bg-[#050505]/20 backdrop-blur-[50px] border-r border-white/[0.03] transition-transform duration-700 ease-out lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="p-6 h-full flex flex-col">
         <div className="flex items-center gap-4 mb-10 px-4">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center font-black text-white shadow-2xl">TF</div>
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center font-black text-white shadow-[0_0_20px_rgba(147,51,234,0.35)]">TF</div>
           <span className="text-xl font-black text-white tracking-tighter">TrackFeed</span>
         </div>
 

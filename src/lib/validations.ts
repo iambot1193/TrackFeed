@@ -11,10 +11,7 @@ export const registerSchema = z.object({
   
   email: z.string()
     .email("E-mail inválido")
-    .toLowerCase()
-    .refine(email => email.endsWith("@gmail.com"), {
-      message: "Por enquanto, aceitamos apenas e-mails do @gmail.com"
-    }),
+    .toLowerCase(),
   
   password: z.string()
     .min(6, "A senha deve ter pelo menos 6 caracteres")

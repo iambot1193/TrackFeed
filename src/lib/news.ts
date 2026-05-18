@@ -449,9 +449,24 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
 
     if (finalArticles.length < 9) {
       const fourMonthsAgo = new Date(Date.now() - 120 * 24 * 60 * 60 * 1000);
+      const searchWords = query.trim().split(/\s+/).filter(Boolean);
+      const searchConditions = searchWords.map(word => ({
+        OR: [
+          { title: { contains: word, mode: 'insensitive' as const } },
+          { description: { contains: word, mode: 'insensitive' as const } }
+        ]
+      }));
+
       const thematicBackup = await prisma.cachedArticle.findMany({
-        where: { category: { in: rawTargets }, language: lang, url: { notIn: finalArticles.map(a => a.url) }, cachedAt: { gte: fourMonthsAgo } },
-        orderBy: { publishedAt: 'desc' }, take: 200
+        where: { 
+          category: { in: rawTargets }, 
+          language: lang, 
+          url: { notIn: finalArticles.map(a => a.url) }, 
+          cachedAt: { gte: fourMonthsAgo },
+          AND: searchConditions.length > 0 ? searchConditions : undefined
+        },
+        orderBy: { publishedAt: 'desc' }, 
+        take: 200
       });
       if (thematicBackup.length > 0) {
         finalArticles = [...finalArticles, ...thematicBackup.map(b => ({

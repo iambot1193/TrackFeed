@@ -19,8 +19,8 @@ Desenvolver uma aplicação Web "Full-stack" onde o usuário possa criar uma con
 - [x] **Edição Flexível:** O usuário pode alterar as categorias escolhidas a qualquer momento pela interface.
 
 ### 3. Integração com API de Notícias
-- [x] **Consumo de API Externa:** Integração robusta com a **NewsAPI**.
-- [x] **Segurança de Chaves:** A chave da API de notícias NUNCA fica exposta no frontend (Uso estrito de Server Actions e `.env`).
+- [x] **Consumo de APIs Externas:** Integração robústa e com fallback triplo entre **NewsAPI** (titular), **GNews** (reserva) e **The Guardian** (idioma inglês).
+- [x] **Segurança de Chaves:** A chave de cada API NUNCA fica exposta no frontend (Uso estrito de Server Actions e `.env`).
 - [x] **Feed Personalizado:** A tela inicial traz *apenas* as notícias correspondentes aos tópicos que o usuário escolheu.
 
 ### 4. Interface e Experiência do Usuário (UI/UX)
@@ -49,8 +49,11 @@ O projeto TrackFeed não apenas cumpre os requisitos, como entrega arquiteturas 
 5. **Engajamento Adicional (Favoritos & Histórico)** 🔖
    - Funcionalidade completa para salvar notícias (Favoritos) e rastrear o histórico automático das últimas leituras.
 
-6. **Validação Rigorosa de Usuários** ✉️
-   - Recuperação de contas e verificação em 2 etapas com o disparo de E-mails com código PIN (via Resend).
+6. **Validação Avançada de Segurança** ✉️
+   - **Verificação de e-mail** em duas etapas com PIN numérico de 6 dígitos enviado via Resend.
+   - **Recuperação de senha** por token seguro de reset com expiração temporária.
+   - **Alteração de e-mail** com revalidação obrigatória da senha atual.
+   - **Modal de verificação de PIN** disponível diretamente dentro do Dashboard sem precisar sair da tela.
 
 ---
 **Conclusão do Desafio:** O escopo exigido foi atendido em sua totalidade, e a arquitetura expandida transformou o MVP em um produto comercializável (SaaS).

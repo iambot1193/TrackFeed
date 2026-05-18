@@ -16,9 +16,11 @@ export async function sendVerificationEmail(email: string, userName: string, cod
   let recipient = email;
   let sandboxNote = "";
 
-  // Redirecionamento de Sandbox do Resend para evitar falhas de envio
-  if (email !== "felipelopes1193@gmail.com") {
-    recipient = "felipelopes1193@gmail.com";
+  const sandboxEmail = process.env.RESEND_SANDBOX_EMAIL;
+
+  // Redirecionamento dinâmico de Sandbox do Resend para evitar falhas de envio local/testes
+  if (sandboxEmail && email.toLowerCase() !== sandboxEmail.toLowerCase()) {
+    recipient = sandboxEmail;
     sandboxNote = `<p style="color: #ef4444; font-size: 11px; text-align: center; font-weight: bold; background: #fee2e2; padding: 8px; border-radius: 8px; margin-bottom: 15px; font-family: sans-serif;">⚠️ MODO SANDBOX RESEND: Destinatário original era <b>${email}</b></p>`;
   }
 
@@ -73,8 +75,11 @@ export async function sendResetPasswordEmail(email: string, userName: string, re
   let recipient = email;
   let sandboxNote = "";
 
-  if (email !== "felipelopes1193@gmail.com") {
-    recipient = "felipelopes1193@gmail.com";
+  const sandboxEmail = process.env.RESEND_SANDBOX_EMAIL;
+
+  // Redirecionamento dinâmico de Sandbox do Resend para evitar falhas de envio local/testes
+  if (sandboxEmail && email.toLowerCase() !== sandboxEmail.toLowerCase()) {
+    recipient = sandboxEmail;
     sandboxNote = `<p style="color: #ef4444; font-size: 11px; text-align: center; font-weight: bold; background: #fee2e2; padding: 8px; border-radius: 8px; margin-bottom: 15px; font-family: sans-serif;">⚠️ MODO SANDBOX RESEND: Destinatário original era <b>${email}</b></p>`;
   }
 
