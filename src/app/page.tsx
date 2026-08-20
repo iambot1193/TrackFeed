@@ -2,7 +2,7 @@
 
 import { useState, useActionState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
@@ -104,7 +104,7 @@ function LoginContent() {
             <div className="space-y-2 group">
               <div className="flex items-center justify-between px-2">
                 <Label className="text-zinc-500 font-black uppercase text-[8px] tracking-[0.2em] group-focus-within:text-purple-400 transition-all">Segurança</Label>
-                <Link href="/forgot-password" size="sm" className="text-[8px] font-black text-zinc-600 hover:text-white transition-all uppercase tracking-widest">Esqueceu?</Link>
+                <Link href="/forgot-password" className="text-[8px] font-black text-zinc-600 hover:text-white transition-all uppercase tracking-widest">Esqueceu?</Link>
               </div>
               <div className="relative">
                 <Input
@@ -127,7 +127,7 @@ function LoginContent() {
 
             <Button
               type="submit"
-              disabled={isPending || (process.env.NODE_ENV === "production" && SITE_KEY && !captchaToken)}
+              disabled={isPending || !!(process.env.NODE_ENV === "production" && SITE_KEY && !captchaToken)}
               className="w-full h-12 bg-white text-black hover:bg-purple-600 hover:text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 rounded-xl group overflow-hidden"
             >
               {isPending ? (

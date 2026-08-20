@@ -33,7 +33,7 @@ export async function sendVerificationEmail(email: string, userName: string, cod
         <span style="font-size: 32px; font-weight: 800; letter-spacing: 10px; color: #111827;">${code}</span>
       </div>
       <p style="color: #6b7280; font-size: 14px; margin-top: 20px; text-align: center;">
-        Este código expira em 24 horas. Se você não solicitou este e-mail, pode ignorá-lo com segurança.
+        Este código expira em 10 minutos. Se você não solicitou este e-mail, pode ignorá-lo com segurança.
       </p>
       <hr style="border: 0; border-top: 1px solid #f3f4f6; margin: 30px 0;" />
       <p style="color: #9ca3af; font-size: 12px; text-align: center;">Equipe de Segurança TrackFeed</p>

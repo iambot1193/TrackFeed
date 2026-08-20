@@ -1,7 +1,6 @@
 'use client'
 
-import { LayoutDashboard, Compass, Bookmark, History, User, LogOut, ShieldCheck } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { LayoutDashboard, Compass, Bookmark, History, User, LogOut } from "lucide-react";
 
 export function Sidebar({ activeTab, updateFilters, isSidebarOpen, setSidebarOpen, user, logout, lastUpdated }: any) {
   const syncTime = lastUpdated 
@@ -67,7 +66,7 @@ export function Sidebar({ activeTab, updateFilters, isSidebarOpen, setSidebarOpe
             >
               <div className="h-10 w-10 rounded-xl bg-zinc-900 border border-white/10 group-hover:border-cyan-500/50 flex items-center justify-center text-[10px] font-black text-white uppercase overflow-hidden transition-colors">
                 {user.avatarUrl ? (
-                  <img src={user.avatarUrl} className="w-full h-full object-cover" />
+                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
                 ) : (
                   user.name.substring(0, 2)
                 )}

@@ -32,10 +32,11 @@ Este documento serve como **prova de execução e mapeamento de critérios** par
 
 ### 3. 🚧 Proteção de Rotas e Persistência de Sessão
 *   **Problema/Requisito:** Bloquear o acesso de usuários anônimos ao Dashboard ou áreas privadas.
-*   **Solução:** Criação de um sistema de sessão baseado em cookies `HTTP-Only`. O cookie `userId` é gravado no navegador com propriedades de segurança restritas. A página principal do Dashboard intercepta e valida a existência desse cookie antes de renderizar qualquer elemento.
+*   **Solução:** Sessão baseada em cookie `HTTP-Only` **assinado por HMAC**, contendo `userId`, versão da sessão e timestamp de emissão — não é um `userId` cru, então não dá para forjar a sessão de outro usuário editando o cookie. A expiração é validada no servidor (não só pelo `maxAge` do navegador) e a versão permite revogar sessões antigas quando a senha muda. Um middleware bloqueia as rotas privadas antes de renderizar qualquer elemento.
 *   **Arquivos Responsáveis:**
-    *   **Validação na Entrada do Dashboard:** [src/app/dashboard/page.tsx:L18-L21](../src/app/dashboard/page.tsx#L18-L21) (Redireciona para o login se `userId` for nulo)
-    *   **Gravação do Cookie no Login:** [src/app/login-actions.ts:L49-L56](../src/app/login-actions.ts#L49-L56) (Define o cookie com `httpOnly: true`, `secure: production` e expiração de 7 dias)
+    *   **Emissão e validação do cookie:** [src/lib/session.ts](../src/lib/session.ts) (`setSessionCookie`, `getSessionUserId`)
+    *   **Bloqueio das rotas privadas:** [src/middleware.ts](../src/middleware.ts) (checagem de assinatura/expiração no edge, antes da página)
+    *   **Gravação do Cookie no Login:** [src/app/login-actions.ts](../src/app/login-actions.ts) (`httpOnly: true`, `secure` em produção, `sameSite: lax`, 7 dias)
 
 ---
 

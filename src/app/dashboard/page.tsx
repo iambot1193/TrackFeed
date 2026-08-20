@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { fetchNewsWithFilters, getApiStatus, NewsArticle } from "@/lib/news";
 import DashboardClient from "./DashboardClient";
 import { getUserFavorites } from "./actions";
+import { getSessionUserId } from "@/lib/session";
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +15,15 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  // getSessionUserId consulta o banco (versão da sessão), então uma queda de DB aqui
+  // precisa cair no mesmo tratamento gracioso das queries abaixo, e não num 500.
+  let userId: string | null;
+  try {
+    userId = await getSessionUserId();
+  } catch (dbError) {
+    console.error(">>> ERRO DE CONEXÃO AO BANCO NA SESSÃO:", dbError);
+    redirect("/?error=db_connection");
+  }
 
   if (!userId) redirect("/");
 
@@ -27,7 +34,7 @@ export default async function DashboardPage({
         where: { id: userId },
         include: { preferences: true }
       }),
-      getUserFavorites(userId),
+      getUserFavorites(),
       prisma.history.findMany({
         where: { userId },
         orderBy: { viewedAt: 'desc' },
@@ -68,8 +75,12 @@ export default async function DashboardPage({
   let historyStats: any = null;
 
   if (tab === 'favs') {
-    const favsWithDetails = await Promise.all(favorites.map(async (f) => {
-      const cached = await prisma.cachedArticle.findUnique({ where: { url: f.url } });
+    const favCached = await prisma.cachedArticle.findMany({
+      where: { url: { in: favorites.map(f => f.url) } }
+    });
+    const favCachedByUrl = new Map(favCached.map(c => [c.url, c]));
+    const favsWithDetails = favorites.map((f) => {
+      const cached = favCachedByUrl.get(f.url);
       return {
         title: f.title,
         description: f.description || "",
@@ -80,11 +91,10 @@ export default async function DashboardPage({
         category: cached?.category || "general",
         language: cached?.language || "pt"
       } as NewsArticle;
-    }));
+    });
 
     const stats = {
       totalRead: favsWithDetails.length,
-      totalClicks: favsWithDetails.length,
       categories: {} as Record<string, number>
     };
 
@@ -118,15 +128,20 @@ export default async function DashboardPage({
 
     const stats = {
       totalRead: historyEntries.length,
-      totalClicks: historyEntries.length,
+      totalClicks: historyEntries.reduce((sum, h) => sum + h.clickCount, 0),
       categories: {} as Record<string, number>
     };
+
+    const historyCached = await prisma.cachedArticle.findMany({
+      where: { url: { in: historyEntries.map(h => h.url) } }
+    });
+    const historyCachedByUrl = new Map(historyCached.map(c => [c.url, c]));
 
     const uniqueHistoryUrls = new Set<string>();
     const historyWithDetails = [];
 
     for (const h of historyEntries) {
-      const cached = await prisma.cachedArticle.findUnique({ where: { url: h.url } });
+      const cached = historyCachedByUrl.get(h.url);
       const cat = cached?.category || "general";
       stats.categories[cat] = (stats.categories[cat] || 0) + 1;
 
@@ -162,7 +177,7 @@ export default async function DashboardPage({
   } else if (tab === 'explore') {
     const rawNews = await fetchNewsWithFilters({
       languages, sortBy: "popularity",
-      categories: catParam ? selectedCategories : ["general", "technology", "science", "business", "ai", "games"],
+      categories: catParam ? selectedCategories : ["general", "technology", "science", "business", "games"],
       query: query || "", page
     });
     const excludeUrls = new Set([
@@ -191,11 +206,9 @@ export default async function DashboardPage({
         isVerified: !!user.emailVerified,
         interests: user.preferences.map(p => p.categoryName)
       }}
-      interestCount={user.preferences.length}
       currentFilters={{
         languages, sort, categories: selectedCategories, query, page, tab
       }}
-      availableCategories={user.preferences.map(p => p.categoryName)}
       favoriteUrls={favorites.map(f => f.url)}
       apiStatus={{
         newsApiRemaining: apiStatus.newsApiQuota,

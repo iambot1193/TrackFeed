@@ -3,13 +3,22 @@
 import { prisma } from "@/lib/prisma";
 import { sendResetPasswordEmail } from "@/lib/mail";
 import crypto from "crypto";
+import { forgotPasswordSchema } from "@/lib/validations";
 
-export async function requestPasswordReset(prevState: any, formData: FormData) {
-  const email = formData.get("email") as string;
+type PasswordResetState = { error?: string; success?: boolean };
 
-  if (!email) {
-    return { error: "Por favor, digite seu e-mail." };
+export async function requestPasswordReset(prevState: PasswordResetState | null, formData: FormData): Promise<PasswordResetState> {
+  const rawEmail = formData.get("email") as string;
+  const validated = forgotPasswordSchema.safeParse({ email: rawEmail });
+
+  if (!validated.success) {
+    return { error: "Por favor, digite um e-mail válido." };
   }
+
+  const { email } = validated.data;
+
+  // Resposta genérica sempre igual: não revela se o e-mail existe na base
+  const genericSuccess = { success: true };
 
   try {
     // 1. Busca o usuário pelo e-mail
@@ -17,11 +26,8 @@ export async function requestPasswordReset(prevState: any, formData: FormData) {
       where: { email }
     });
 
-    // Segurança: Mesmo que o e-mail não exista, podemos fingir que enviamos 
-    // para evitar que descubram quais e-mails estão cadastrados. 
-    // Mas para facilitar o seu teste, vamos avisar se não existir.
     if (!user) {
-      return { error: "Não encontramos nenhuma conta com esse e-mail." };
+      return genericSuccess;
     }
 
     // 2. Gera um token seguro de 32 caracteres
@@ -40,18 +46,18 @@ export async function requestPasswordReset(prevState: any, formData: FormData) {
     });
 
     // 5. Constrói o link de recuperação
-    // Em produção, você usaria o domínio real. Aqui usamos localhost.
-    const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-    const host = process.env.VERCEL_URL || "localhost:3000";
-    const resetLink = `${protocol}://${host}/reset-password?token=${token}`;
+    // NEXT_PUBLIC_APP_URL deve ser o domínio público real (VERCEL_URL é a URL do deploy específico, não o domínio de produção)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const resetLink = `${appUrl}/reset-password?token=${token}`;
 
     // 6. Envia o e-mail
     await sendResetPasswordEmail(user.email, user.name || "Usuário", resetLink);
 
-    return { success: true };
+    return genericSuccess;
 
   } catch (error) {
     console.error(">>> ERRO NO PEDIDO DE RECUPERAÇÃO:", error);
-    return { error: "Ocorreu um erro ao processar seu pedido. Tente novamente." };
+    // Mesmo em erro interno, não vazamos detalhes que ajudem enumeração
+    return genericSuccess;
   }
 }

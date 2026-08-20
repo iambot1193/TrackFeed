@@ -25,6 +25,27 @@ export interface FetchNewsOptions {
   pageSize?: number;
 }
 
+interface CategoryRow {
+  slug: string;
+  label: string;
+  keywords: string[];
+}
+
+/** Formato bruto do artigo antes da normalização — cada provedor devolve um shape diferente. */
+interface RawArticle {
+  title?: string;
+  description?: string | null;
+  url?: string;
+  urlToImage?: string;
+  image?: string;
+  webTitle?: string;
+  webUrl?: string;
+  webPublicationDate?: string;
+  publishedAt?: string;
+  source?: { name?: string };
+  fields?: { thumbnail?: string; trailText?: string };
+}
+
 const NEWS_API_KEY = process.env.NEWS_API_KEY || "";
 const GNEWS_API_KEY = process.env.GNEWS_API_KEY || "";
 const GUARDIAN_API_KEY = process.env.GUARDIAN_API_KEY || "";
@@ -33,7 +54,7 @@ const NEWS_BASE_URL = "https://newsapi.org/v2";
 const GNEWS_BASE_URL = "https://gnews.io/api/v4";
 const GUARDIAN_BASE_URL = "https://content.guardianapis.com";
 
-let cachedCategories: any[] | null = null;
+let cachedCategories: CategoryRow[] | null = null;
 
 async function ensureCategories() {
   if (cachedCategories) return cachedCategories;
@@ -190,7 +211,9 @@ async function cacheArticles(articles: NewsArticle[], lang: string) {
         }
       });
     }
-  } catch (error) { }
+  } catch (error) {
+    console.error("[ensureCategories] Erro no setup pesado:", error);
+  }
 }
 
 const sourceCategoryMap: Record<string, string> = {
@@ -235,7 +258,7 @@ const sourceCategoryMap: Record<string, string> = {
   "G1 Economia": "business", "CNN Brasil Business": "business"
 };
 
-function identifyCategory(title: string, description: string, availableCats: any[], sourceName?: string): string {
+function identifyCategory(title: string, description: string, availableCats: CategoryRow[], sourceName?: string): string {
   const text = (title + " " + (description || "")).toLowerCase();
   const scores: Record<string, number> = {};
   availableCats.forEach(cat => scores[cat.slug] = 0);
@@ -268,7 +291,7 @@ function identifyCategory(title: string, description: string, availableCats: any
   return maxScore >= 4 ? bestCat : "general";
 }
 
-async function categorizeBatchWithAI(articles: any[], availableCats: any[]): Promise<any[]> {
+async function categorizeBatchWithAI(articles: NewsArticle[], availableCats: CategoryRow[]): Promise<NewsArticle[]> {
   const needsAI = articles.filter(a => a.category === "general");
   if (!GEMINI_API_KEY || needsAI.length === 0) return articles;
 
@@ -308,7 +331,7 @@ Retorne APENAS JSON no formato exato: { "categories": ["cat1", "cat2", ...] }`;
   return articles; 
 }
 
-const dedup = (list: any[]) => {
+const dedup = (list: NewsArticle[]) => {
   const uniqueMap = new Map();
   list.forEach(art => {
     const urlKey = art.url.trim().toLowerCase();
@@ -331,15 +354,12 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
       rawTargets = ["technology", "science", "sports", "health", "games", "movies", "music", "crypto", "business"];
     }
     const targets = lang === "pt" ? rawTargets.flatMap(t => [t, categoryTranslations[t.toLowerCase()] || t]) : rawTargets;
-    let searchTerm = query ? (rawTargets.length > 0 && !rawTargets.includes('general') ? `(${query}) AND (${targets.join(" OR ")})` : query) : targets.join(" OR ");
+    const searchTerm = query ? (rawTargets.length > 0 && !rawTargets.includes('general') ? `(${query}) AND (${targets.join(" OR ")})` : query) : targets.join(" OR ");
 
     let finalArticles: NewsArticle[] = [];
     let currentPage = page;
     const MAX_PAGES = page + 1; // Máximo de 2 páginas de APIs externas para velocidade incrível!
     const TARGET_SIZE = page * pageSize;
-
-    // Busca o status das cotas apenas uma vez fora do loop
-    const status = await getApiStatus();
 
     while (finalArticles.length < TARGET_SIZE && currentPage <= MAX_PAGES) {
       
@@ -350,7 +370,7 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
               console.log(`[NewsAPI] Status: ${data.status} | Total: ${data.totalResults || 0} | Code: ${data.code || 'None'} | Msg: ${data.message || 'None'}`);
               if (data.status === "ok" && data.articles?.length > 0) {
                 await updateApiQuota("newsapi");
-                return data.articles.filter((a: any) => a.title && a.urlToImage && !a.title.includes("[Removed]")).map((art: any) => ({
+                return data.articles.filter((a: RawArticle) => a.title && a.urlToImage && !a.title.includes("[Removed]")).map((art: RawArticle) => ({
                   title: art.title, description: art.description || "", url: art.url, urlToImage: art.urlToImage, publishedAt: art.publishedAt,
                   source: { name: art.source?.name || "Fonte" }, category: "general", language: lang
                 }));
@@ -373,7 +393,7 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
               }
               if (data.articles && data.articles.length > 0) {
                 await updateApiQuota("gnews");
-                return data.articles.map((art: any) => ({
+                return data.articles.map((art: RawArticle) => ({
                   title: art.title, description: art.description || "", url: art.url, urlToImage: art.image, publishedAt: art.publishedAt,
                   source: { name: art.source?.name || "GNews" }, category: "general", language: lang
                 }));
@@ -390,7 +410,7 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
             .then(res => res.json())
             .then(data => {
               if (data.response?.status === "ok" && data.response.results?.length > 0) {
-                return data.response.results.map((art: any) => ({
+                return data.response.results.map((art: RawArticle) => ({
                   title: art.webTitle, description: art.fields?.trailText || "", url: art.webUrl, urlToImage: art.fields?.thumbnail || "",
                   publishedAt: art.webPublicationDate, source: { name: "The Guardian" }, category: "general", language: lang
                 }));
@@ -437,7 +457,9 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
               language: art.language || lang
             }
           });
-        } catch (e) {}
+        } catch (e) {
+          console.error(`[fetchNewsWithFilters] falha ao cachear artigo ${art.url}:`, e);
+        }
       }));
 
       currentPage++;
@@ -478,19 +500,21 @@ export async function fetchNewsWithFilters(options: FetchNewsOptions): Promise<N
       finalArticles = dedup(finalArticles);
     }
     return finalArticles.slice(0, Math.max(12, TARGET_SIZE));
-  } catch (error) { return []; }
+  } catch { return []; }
 }
 
 async function updateApiQuota(api: "newsapi" | "gnews") {
   try {
     const field = api === "newsapi" ? "newsApiQuota" : "gnewsQuota";
-    const current = await getApiStatus();
+    // Decrement atômico no banco: evita a corrida de duas requests lendo o mesmo valor
     await prisma.apiStatus.upsert({
       where: { id: "singleton" },
-      update: { [field]: Math.max(0, current[field] - 1), lastUpdated: new Date() },
+      update: { [field]: { decrement: 1 }, lastUpdated: new Date() },
       create: { id: "singleton", newsApiQuota: 100, gnewsQuota: 100, lastUpdated: new Date() }
     });
-  } catch (e) {}
+  } catch (e) {
+    console.error(`[updateApiQuota] falha ao decrementar cota de ${api}:`, e);
+  }
 }
 
 export async function getApiStatus() {
@@ -502,17 +526,5 @@ export async function getApiStatus() {
       status = await prisma.apiStatus.update({ where: { id: "singleton" }, data: { newsApiQuota: 100, gnewsQuota: 100, lastUpdated: now } });
     }
     return status;
-  } catch (e) { return { newsApiQuota: 100, gnewsQuota: 100, lastUpdated: new Date() }; }
-}
-
-export async function summarizeArticle(title: string, description: string) {
-  try {
-    const prompt = `Resuma em 3 tópicos curtos: Título: ${title} Descrição: ${description}`;
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 250 } })
-    });
-    const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Resumo indisponível.";
-  } catch (e) { return "Erro no resumo."; }
+  } catch { return { newsApiQuota: 100, gnewsQuota: 100, lastUpdated: new Date() }; }
 }

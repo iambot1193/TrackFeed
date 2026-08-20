@@ -1,33 +1,23 @@
 'use server'
 
-import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getSessionUserId } from "@/lib/session";
+import { setUserPreferences, sanitizeCategories } from "@/lib/preferences";
 
 export async function saveInterests(interests: string[]) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  const userId = await getSessionUserId();
 
   if (!userId) {
     redirect("/");
   }
 
-  if (interests.length < 1) {
-    return { error: "Selecione pelo menos 1 interesse." };
+  if (sanitizeCategories(interests).length < 1) {
+    return { error: "Selecione pelo menos 1 interesse válido." };
   }
 
   try {
-    await prisma.preference.deleteMany({
-      where: { userId }
-    });
-
-    await prisma.preference.createMany({
-      data: interests.map(category => ({
-        userId,
-        categoryName: category
-      }))
-    });
-  } catch (error: any) {
+    await setUserPreferences(userId, interests);
+  } catch {
     return { error: "Ocorreu um erro no banco de dados. Tente novamente." };
   }
 

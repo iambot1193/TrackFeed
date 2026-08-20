@@ -1,150 +1,99 @@
-# TrackFeed - Cinematic AI News Dashboard 🚀
+# TrackFeed
 
-> 🌐 **Deploy de Produção:** [Acesse o TrackFeed Online (Vercel)](https://trackfeed-inspo.vercel.app)
+Dashboard de notícias personalizadas: o usuário escolhe categorias de interesse e o feed busca, deduplica e categoriza notícias em tempo real a partir de três provedores (NewsAPI, GNews, The Guardian), com um passo extra de classificação por IA (Gemini) quando a categorização por palavra-chave fica em dúvida.
+
+Construído como resposta a um desafio técnico da Trackland; o checklist original de critérios está em [`docs/desafio.md`](./docs/desafio.md).
+
+> 🌐 **Deploy:** [trackfeed-inspo.vercel.app](https://trackfeed-inspo.vercel.app)
 >
-> 🔑 **Acesso de Teste Rápido:**
-> *   **E-mail/Usuário:** `teste@example.com` (ou crie um novo no cadastro!)
-> *   **Senha:** `123456`
+> ⚠️ Conta de teste disponível mediante cadastro próprio na tela de login. Não há conta pública compartilhada — sessão é um cookie assinado por usuário, então uma conta de demo pública seria trivialmente sequestrável por qualquer visitante.
 
 ---
 
-## 🖼️ Capa do Projeto
+## Capa
 
-![TrackFeed Preview](./public/preview.png)
+![TrackFeed Preview](./public/screenshots/feed.png)
 
----
+## Telas
 
-## 🎬 Demonstração em Vídeo & Pitch (Entregável do Desafio)
-
-> [!IMPORTANT]
-> **Assista abaixo à apresentação completa do projeto**, demonstrando o design Cyber-Glass em ação, a categorização em tempo real alimentada pelo Gemini AI e o fluxo de login e redefinição de perfil:
-
-<div align="center">
-  <video src="./public/screenshots/apresentacao.mp4" controls width="100%" style="border-radius: 2rem; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.8);"></video>
-  <p><i>Caso o player de vídeo acima não carregue no seu navegador, você também pode <a href="./public/screenshots/apresentacao.mp4"><b>baixar o vídeo diretamente clicando aqui</b></a>!</i></p>
-</div>
-
----
-
-## 🖥️ Galeria de Telas (Cyber-Glass Grid)
-
-Para garantir uma leitura limpa e elegante, organizamos as capturas de tela das principais interfaces do sistema em uma grade:
-
-| 🔐 Tela de Login | 📝 Tela de Cadastro | 🎯 Escolha de Interesses |
+| Login | Cadastro | Escolha de Interesses |
 | :---: | :---: | :---: |
 | ![Login Screen](./public/screenshots/login.png) | ![Register Screen](./public/screenshots/cadastro.png) | ![Interests Choice](./public/screenshots/interesse.png) |
-| *Autenticação segura com cookies nativos.* | *Criação de conta com proteção anti-bot.* | *Seleção obrigatória de temas no onboarding.* |
 
-| 📧 Verificação de E-mail | 🔮 Feed Principal | 🧑‍💻 Perfil do Usuário |
+| Pós-Cadastro | Feed Principal | Perfil do Usuário |
 | :---: | :---: | :---: |
-| ![Email Verification](./public/screenshots/escolha.png) | ![Dashboard Feed](./public/screenshots/feed.png) | ![User Profile](./public/screenshots/usuario0.png) |
-| *Segurança em duas etapas via código PIN por e-mail.* | *Dashboard imersivo com efeito Cyber-Glass e Hot News.* | *Edição de dados, senha, avatar e preferências.* |
+| ![Escolha pós-cadastro](./public/screenshots/escolha.png) | ![Dashboard Feed](./public/screenshots/feed.png) | ![User Profile](./public/screenshots/usuario0.png) |
 
 ---
 
-## ✨ Funcionalidades "State-of-the-Art"
+## Funcionalidades
 
-- **Visual Cinematic Cyber-Glass**: Interface imersiva com efeitos de desfoque, gradientes em movimento e profundidade 3D (parallax) que reage ao mouse.
-- **Heat System (Hot Now)**: Notícias quentes ganham indicadores visuais de "calor" (glow e animações pulsantes).
-- **Categorização Híbrida por IA**: Motor que combina regras heurísticas com classificação semântica via Google Gemini 2.0 Flash.
-- **Três Modos Editoriais**:
-  - **Gemini (Home)**: Layout equilibrado e editorial.
-  - **ChatGPT (Explore)**: Foco em descoberta com grandes destaques visuais.
-  - **Grok (Favorites)**: Interface orientada a ação e salvamento dos favoritos.
+- **Categorização híbrida**: regras por palavra-chave/fonte primeiro; o que sobra como "general" vai em lote para o Gemini classificar.
+- **Três modos de visualização** no dashboard: feed editorial (Home), descoberta (Explore) e favoritos.
+- **Sessão de cookie assinado (HMAC)** — não é um `userId` cru, então não dá para forjar sessão de outro usuário trocando o valor do cookie. A expiração é validada no servidor e trocar a senha revoga as sessões antigas.
+- **Verificação de e-mail por código de 6 dígitos**, com expiração de 10 minutos e limite de tentativas.
+- **Histórico e favoritos** por usuário, com cache de artigos no banco para reduzir chamadas às APIs externas.
+
+## Segurança
+
+Decisões de segurança aplicadas, todas verificadas com um smoke test ponta a ponta e um pentest básico contra um Postgres local:
+
+- **Sessão com cookie assinado (HMAC-SHA256)** — o valor carrega `userId`, versão da sessão e timestamp de emissão. Adulterar qualquer parte invalida a assinatura; um cookie assinado com outro segredo é rejeitado.
+- **Expiração validada no servidor** — não se confia só no `maxAge` do navegador; um token com timestamp expirado é recusado mesmo que o cookie persista.
+- **Revogação de sessão** — trocar a senha (no perfil ou via reset) incrementa `sessionVersion` e derruba as sessões antigas; a sessão atual é reemitida na hora.
+- **Rate limit de login** — 5 falhas por identificador travam novas tentativas por 15 min. Persistido no banco (não em memória) porque a app roda serverless. Falhas são contadas tanto para usuário inexistente quanto para senha errada, evitando enumeração por comportamento.
+- **Mensagens genéricas** — login e recuperação de senha não revelam se o e-mail existe.
+- **Validação em todo trust boundary** — Server Actions revalidam nome, e-mail, senha e categorias com os mesmos schemas Zod do cadastro; e-mails são normalizados para minúsculas. Trocar o e-mail descarta qualquer código de verificação pendente (senão o código enviado ao endereço antigo validaria o novo).
+- **SQL injection** — imune por design: todo acesso a dados passa pelo Prisma (queries parametrizadas), sem SQL cru.
+- **XSS / mass assignment** — nome restrito a alfanumérico, avatar limitado a URLs http(s) e data URLs de imagem (SVG fora da whitelist); os campos de atualização de perfil são montados um a um, sem espalhar o input do cliente.
+- **CSRF** — coberto pela verificação nativa de Origin das Server Actions do Next 15.
+- **Cookie** — `httpOnly`, `sameSite=lax` e `secure` em produção.
+
+## Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router, Server Actions)
+- **Banco**: PostgreSQL via [Prisma ORM](https://www.prisma.io/)
+- **IA**: Google Gemini 2.0 Flash, usado só como fallback de classificação em lote
+- **Estilização**: Tailwind CSS 4
+- **E-mail transacional**: [Resend](https://resend.com/)
+- **Fontes de notícia**: NewsAPI, GNews, The Guardian
 
 ---
 
-## 🛠️ Tech Stack
+## Rodando localmente
 
-- **Framework**: [Next.js 15+](https://nextjs.org/) (App Router rodando sobre Webpack estável)
-- **Database**: [PostgreSQL](https://www.postgresql.org/) com [Prisma ORM](https://www.prisma.io/)
-- **AI Engine**: [Google Gemini 2.0 Flash](https://ai.google.dev/) (Classificação semântica em lote)
-- **Estilização**: [Tailwind CSS](https://tailwindcss.com/)
-- **Transações de E-mail**: [Resend API](https://resend.com/) (Com redirecionamentos dinâmicos de sandbox e suporte a qualquer domínio externo)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **News Sources**: NewsAPI, GNews, The Guardian
-
----
-
-## 🚀 Como Começar (Dev Local)
-
-### 1. Clone o repositório
-```bash
-git clone https://github.com/iambot1193/TrackFeed.git
-cd TrackFeed
-```
-
-### 2. Instale as dependências
+### 1. Instalar dependências
 ```bash
 npm install
 ```
 
-### 3. Configuração do Ambiente (.env)
-Crie um arquivo `.env` na raiz do projeto e copie o conteúdo de `.env.example`. Você precisará configurar:
-- **Banco de Dados**: `DATABASE_URL` (PostgreSQL).
-- **IA**: `GEMINI_API_KEY` (Google AI Studio).
-- **Notícias**: `NEWS_API_KEY`, `GNEWS_API_KEY` e `GUARDIAN_API_KEY`.
-- **E-mail**: `RESEND_API_KEY` e o e-mail de sandbox `RESEND_SANDBOX_EMAIL`.
+### 2. Configurar o `.env`
+Copie `.env.example` para `.env` e preencha pelo menos a Seção A (`DATABASE_URL`, `SESSION_SECRET`, `GEMINI_API_KEY` e as chaves de notícia). A Seção B (Resend, reCAPTCHA, `NEXT_PUBLIC_APP_URL`) só é necessária para deploy em produção.
 
-### 4. Sincronização do Banco de Dados (Prisma)
+### 3. Sincronizar o schema com o banco
 ```bash
-# Gera o cliente Prisma baseado no schema
-npx prisma generate
-
-# Sincroniza o schema diretamente com o banco (Ideal para Dev/Testes)
 npx prisma db push
 ```
+O projeto usa `db push` (sem histórico de migrations versionado) — é o fluxo mais direto para um banco de desenvolvimento/demo. Para um projeto com múltiplos ambientes e time, o caminho certo seria `prisma migrate dev`/`migrate deploy` com migrations no controle de versão.
 
-### 5. Inicie o Servidor
+### 4. Rodar
 ```bash
 npm run dev
 ```
-O dashboard estará disponível em `http://localhost:3000`.
+`http://localhost:3000`.
 
 ---
 
-## Como Hospedar Online (Deploy em Produção)
+## Deploy (Vercel + Supabase)
 
-Para colocar o **TrackFeed** ativo no ar na nuvem (Vercel + Supabase):
-
-### 1. Banco de Dados na Nuvem (Supabase)
-1. Crie uma conta gratuita em [Supabase.com](https://supabase.com/).
-2. Crie um novo projeto PostgreSQL.
-3. Vá em **Project Settings -> Database**, copie a **Connection String** em formato `URI` (ex: `postgresql://...`) e preencha a variável `DATABASE_URL` nas configurações do seu servidor de hospedagem.
-
-### 2. E-mail Transacional de PIN (Resend)
-1. Crie uma conta gratuita em [Resend.com](https://resend.com/).
-2. Acesse a aba **API Keys**, gere uma nova chave de acesso e configure a variável `RESEND_API_KEY` na Vercel.
-3. Defina a variável `RESEND_SANDBOX_EMAIL` para o seu e-mail cadastrado na conta caso esteja testando no ambiente gratuito de Sandbox. Em produção (com domínio verificado), remova essa variável para entregar os e-mails diretamente aos usuários!
-
-> [!WARNING]
-> **ATENÇÃO AO MODO SANDBOX DO RESEND!**
-> Se a sua conta da Resend for nova ou gratuita (sem domínio próprio verificado), a Resend **SÓ permite enviar e-mails para o e-mail cadastrado na sua própria conta**. 
-> Para que os testes funcionem perfeitamente na Vercel, você **DEVE** adicionar a variável `RESEND_SANDBOX_EMAIL` nas variáveis de ambiente da Vercel apontando para o seu e-mail da Resend. Caso contrário, qualquer tentativa de cadastro com outro e-mail falhará com erro de API!
->
-> **Cuidado para não confundir as chaves!** A `RESEND_API_KEY` deve começar obrigatoriamente com `re_`. Não a confunda com a chave secreta do reCAPTCHA (`6Lff...`).
-
-### 3. Proteção Anti-Bot (Google reCAPTCHA v2)
-1. Acesse o console do [Google reCAPTCHA](https://www.google.com/recaptcha/admin).
-2. Registre um novo site escolhendo **reCAPTCHA v2 (caixa de seleção "Não sou um robô")**.
-3. Adicione o seu domínio oficial da Vercel (ex: `seu-app.vercel.app`) nos domínios autorizados.
-4. Copie a **Site Key** (`NEXT_PUBLIC_RECAPTCHA_SITE_KEY`) e a **Secret Key** (`RECAPTCHA_SECRET_KEY`) e adicione-as às variáveis de ambiente na Vercel.
-
-### 4. Deploy no Servidor (Vercel)
-1. Conecte o seu repositório do GitHub diretamente na [Vercel](https://vercel.com).
-2. > [!IMPORTANT]
-   > **Criação Obrigatória das Variáveis de Ambiente na Vercel:**
-   > Para que as funcionalidades do site (como envio de e-mails via Resend, classificação por IA via Gemini e reCAPTCHA) funcionem no deploy automático, você **DEVE** cadastrar manualmente **todas** as variáveis do seu `.env` na aba **Settings > Environment Variables** no painel da Vercel. Se elas não forem criadas lá, o site apresentará falhas nas telas de login, cadastro e verificação!
-3. Adicione **todas** as variáveis do arquivo `.env` (Seção A e Seção B) nas configurações de **Environment Variables** do projeto na Vercel.
-4. A Vercel executará o comando de build (`npm run build`) que gera automaticamente o cliente Prisma, aplica as otimizações do Next.js e disponibiliza o seu site online em segundos!
+1. **Banco**: crie um projeto Postgres no [Supabase](https://supabase.com/), copie a connection string e configure `DATABASE_URL`.
+2. **E-mail (Resend)**: gere uma `RESEND_API_KEY`. Em conta gratuita/sandbox, a Resend só entrega para o e-mail cadastrado na própria conta — configure `RESEND_SANDBOX_EMAIL` apontando pra ele, ou verifique um domínio próprio para enviar a qualquer destinatário.
+3. **reCAPTCHA v2**: registre um site em [google.com/recaptcha/admin](https://www.google.com/recaptcha/admin), adicione o domínio da Vercel, e configure `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` + `RECAPTCHA_SECRET_KEY`. Sem essas chaves em produção, o login/cadastro recusa todas as tentativas (fail-closed, de propósito).
+4. **`NEXT_PUBLIC_APP_URL`**: domínio público real (ex: `https://seu-app.vercel.app`) — usado nos links de e-mail de recuperação de senha.
+5. **`SESSION_SECRET`**: valor aleatório forte (`openssl rand -base64 32`). Sem ele a aplicação não sobe — é o segredo que assina o cookie de sessão. Trocar esse valor invalida todas as sessões existentes.
+6. **Sincronize o schema antes do primeiro deploy** (`npx prisma db push` apontando para o `DATABASE_URL` de produção). O schema inclui a coluna `sessionVersion`, usada na validação de sessão — sem ela, toda requisição autenticada falha.
+7. Cadastre todas as variáveis acima em **Settings → Environment Variables** na Vercel e conecte o repositório.
 
 ---
 
-## 🎯 Avaliação Técnica e Requisitos
-
-Para facilitar a revisão deste projeto pelos avaliadores, preparamos um documento de mapeamento detalhado. Nele, cruzamos todos os critérios exigidos no desafio com os arquivos exatos onde foram implementados na nossa arquitetura.
-
-👉 **[Clique aqui para acessar o Checklist de Critérios de Avaliação (docs/desafio.md)](./docs/desafio.md)**
-
----
 Desenvolvido por Felipe Gonçalves.

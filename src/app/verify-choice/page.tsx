@@ -2,8 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Mail, Sparkles, ArrowRight, ShieldCheck, Zap } from "lucide-react";
+import { Mail, ArrowRight, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";

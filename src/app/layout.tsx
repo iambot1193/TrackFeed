@@ -13,10 +13,37 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const description = "Feed de notícias personalizado: escolha suas categorias e receba notícias de múltiplas fontes, deduplicadas e classificadas por IA.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: "TrackFeed | Notícias Personalizadas",
-  description: "Seu feed de notícias inteligente e personalizado.",
+  description,
+  openGraph: {
+    title: "TrackFeed | Notícias Personalizadas",
+    description,
+    type: "website",
+    locale: "pt_BR",
+    images: ["/screenshots/feed.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TrackFeed | Notícias Personalizadas",
+    description,
+    images: ["/screenshots/feed.png"],
+  },
 };
+
+// Aplica o tema salvo antes da primeira pintura, evitando flash de tema claro
+// (o ThemeProvider só roda no useEffect, depois da hidratação).
+const themeScript = `
+try {
+  var t = localStorage.getItem('theme') || 'dark';
+  document.documentElement.classList.toggle('dark', t === 'dark');
+} catch (e) {
+  document.documentElement.classList.add('dark');
+}
+`;
 
 export default function RootLayout({
   children,
@@ -25,9 +52,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}>
         <ThemeProvider
-          attribute="class"
           defaultTheme="dark"
         >
           {children}

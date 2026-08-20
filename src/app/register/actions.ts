@@ -3,11 +3,12 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import crypto from "crypto";
 import { registerSchema } from "@/lib/validations";
 import { verifyRecaptcha } from "@/lib/captcha";
+import { setSessionCookie } from "@/lib/session";
 
-export async function registerUser(prevState: any, formData: FormData) {
+export async function registerUser(prevState: unknown, formData: FormData) {
     const rawData = Object.fromEntries(formData.entries());
     
     // VALIDAÇÃO COM ZOD
@@ -69,9 +70,9 @@ export async function registerUser(prevState: any, formData: FormData) {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Gera código de 6 dígitos
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Gera código de 6 dígitos (RNG criptográfico, não Math.random)
+        const verificationCode = crypto.randomInt(100000, 1000000).toString();
 
         const newUser = await prisma.user.create({
             data: {
@@ -79,6 +80,7 @@ export async function registerUser(prevState: any, formData: FormData) {
                 email,
                 passwordHash: hashedPassword,
                 verificationCode: verificationCode,
+                verificationCodeExpires: new Date(Date.now() + 10 * 60 * 1000),
             },
         });
 
@@ -87,13 +89,7 @@ export async function registerUser(prevState: any, formData: FormData) {
         await sendVerificationEmail(email, name, verificationCode);
 
         // Autentica o usuário automaticamente após o cadastro
-        const cookieStore = await cookies();
-        cookieStore.set("userId", newUser.id, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 60 * 60 * 24 * 7,
-            path: "/",
-        });
+        await setSessionCookie(newUser.id, newUser.sessionVersion);
 
     } catch (error) {
         console.error(">>> ERRO NO CADASTRO:", error);

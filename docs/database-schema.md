@@ -22,8 +22,11 @@ erDiagram
         String avatarUrl "Optional"
         DateTime emailVerified "Optional"
         String verificationCode "Optional"
+        DateTime verificationCodeExpires "Optional"
+        Int verificationAttempts
         String resetToken UK "Optional"
         DateTime resetTokenExpires "Optional"
+        Int sessionVersion "Revoga sessões antigas"
         DateTime createdAt
         DateTime updatedAt
     }

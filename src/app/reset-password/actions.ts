@@ -2,18 +2,17 @@
 
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { resetPasswordSchema } from "@/lib/validations";
 
-export async function resetPassword(prevState: any, formData: FormData) {
-  const token = formData.get("token") as string;
-  const password = formData.get("password") as string;
+export async function resetPassword(prevState: unknown, formData: FormData) {
+  const rawData = Object.fromEntries(formData.entries());
+  const validated = resetPasswordSchema.safeParse(rawData);
 
-  if (!token) {
-    return { error: "Token de recuperação ausente." };
+  if (!validated.success) {
+    return { error: validated.error.errors[0].message };
   }
 
-  if (!password || password.length < 6) {
-    return { error: "A senha deve ter pelo menos 6 caracteres." };
-  }
+  const { token, password } = validated.data;
 
   try {
     // 1. Busca o usuário pelo token e verifica se ainda é válido
@@ -39,13 +38,14 @@ export async function resetPassword(prevState: any, formData: FormData) {
     // 3. Criptografa a nova senha
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4. Atualiza o usuário e limpa os campos de recuperação
+    // 4. Atualiza o usuário, limpa os campos de recuperação e revoga sessões antigas
     await prisma.user.update({
       where: { id: user.id },
       data: {
         passwordHash: hashedPassword,
         resetToken: null,
-        resetTokenExpires: null
+        resetTokenExpires: null,
+        sessionVersion: { increment: 1 }
       }
     });
 

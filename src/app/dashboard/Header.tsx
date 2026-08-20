@@ -1,6 +1,6 @@
 'use client'
 
-import { Search, Menu, Filter, User, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Search, Menu, Filter, User, Settings, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Input } from "@/components/ui/input";
 import { FilterPopover } from "./FilterPopover";
@@ -66,7 +66,7 @@ export function Header({
           >
             <div className="h-full w-full bg-[#0a0a0a] rounded-[inherit] overflow-hidden flex items-center justify-center">
               {user.avatarUrl ? (
-                <img src={user.avatarUrl} className="w-full h-full object-cover" />
+                <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-white font-black text-xs uppercase tracking-tighter">{user.name.substring(0, 2)}</span>
               )}

@@ -34,8 +34,8 @@ Scripts utilitários para popular dados ou conferir limites de chamadas de APIs 
 
 | Comando | Descrição | Quando usar? |
 | :--- | :--- | :--- |
-| `node check-db-quota.js` | Consulta o status e limites restantes das APIs de notícias. | Sempre que desconfiar que o limite diário da NewsAPI ou GNews acabou. |
-| `npx tsx scratch/master-seed.ts` | Alimenta o banco de dados offline com um pacote inicial de notícias. | Se o seu feed inicial local estiver vazio ou quiser acelerar os testes offline. |
+| `node scripts/check-db-quota.js` | Consulta o status e limites restantes das APIs de notícias. | Sempre que desconfiar que o limite diário da NewsAPI ou GNews acabou. |
+| `npx tsx scripts/re-tag.ts` | Reclassifica via Gemini todos os artigos já cacheados no banco. | Depois de mexer nas categorias/keywords, para recategorizar o acervo existente. |
 
 ---
 
@@ -59,6 +59,6 @@ Isso acontece no Windows quando você tenta rodar `prisma generate` enquanto o s
 ### 🟢 Como rodar o utilitário de cotas
 Basta executar na raiz do projeto:
 ```bash
-node check-db-quota.js
+node scripts/check-db-quota.js
 ```
 O console exibirá um relatório formatado das cotas salvas no banco de dados.

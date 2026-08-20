@@ -67,8 +67,8 @@ ${batch.map((a, idx) => `[${idx}] Título: ${a.title}\nDescrição: ${a.descript
             console.error(">>> Erro de formatação da IA:", categoriesArray);
         }
       }
-    } catch (e: any) {
-      console.error(`>>> Erro no lote ${i / 20 + 1}:`, e.message);
+    } catch (e) {
+      console.error(`>>> Erro no lote ${i / 20 + 1}:`, e instanceof Error ? e.message : e);
     }
     
     // Delay de 1.5s entre os lotes

@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
-  Cpu, Trophy, Briefcase, Film, FlaskConical, 
+  Cpu, Trophy, Briefcase, FlaskConical,
   HeartPulse, Globe, Gamepad2, Bitcoin, Clapperboard, Music, Check,
   Loader2, ArrowRight
 } from "lucide-react";

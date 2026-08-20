@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useRef, useTransition } from "react";
 import {
-  X, AlertCircle, Loader2, SearchX, Globe, Filter,
-  BookmarkIcon, ArrowRight, ShieldCheck, User, LogOut,
-  Settings, Camera, BarChart2, Plus, Zap, CheckCircle2, Mail
+  X, AlertCircle, Loader2, Globe, Filter,
+  BookmarkIcon, ArrowRight, ShieldCheck,
+  Settings, BarChart2, Plus, CheckCircle2, Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { NewsArticle } from "@/lib/news";
 import { BackgroundEffects } from "./BackgroundEffects";
 import { Sidebar } from "./Sidebar";
@@ -20,42 +19,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "@/components/theme-provider";
 import {
   toggleFavorite, addToHistory, updateUserProfile, logout,
-  updateUserPreferences, deleteAccountAction, getApiStatusAction,
-  summarizeNewsAction, resendVerificationEmailAction, verifyEmailInDashboardAction
+  deleteAccountAction,
+  resendVerificationEmailAction, verifyEmailInDashboardAction
 } from "./actions";
-
-const ALL_POSSIBLE_CATEGORIES = [
-  { slug: 'general', label: 'Geral' },
-  { slug: 'technology', label: 'Tecnologia' },
-  { slug: 'business', label: 'Negócios' },
-  { slug: 'health', label: 'Saúde' },
-  { slug: 'science', label: 'Ciência' },
-  { slug: 'sports', label: 'Esportes' },
-  { slug: 'games', label: 'Games' },
-  { slug: 'crypto', label: 'Cripto' },
-  { slug: 'movies', label: 'Cinema' },
-  { slug: 'music', label: 'Música' }
-];
-
-const tagColors: any = {
-  general: 'bg-zinc-500',
-  technology: 'bg-cyan-500',
-  business: 'bg-emerald-500',
-  health: 'bg-red-500',
-  science: 'bg-purple-500',
-  sports: 'bg-orange-500',
-  games: 'bg-green-500',
-  crypto: 'bg-yellow-500',
-  movies: 'bg-rose-500',
-  music: 'bg-indigo-500'
-};
+import { ALL_POSSIBLE_CATEGORIES } from "./categories";
+import { PremiumNewsCard } from "./PremiumNewsCard";
+import { ProfileSection } from "./ProfileSection";
+import { NewsSkeletonGrid } from "./NewsSkeletonGrid";
+import { HistoryStats } from "./HistoryStats";
+import { EmptyState } from "./EmptyState";
 
 export default function DashboardClient({
   initialNews,
   user,
-  interestCount,
   currentFilters,
-  availableCategories,
   favoriteUrls,
   apiStatus,
   historyStats
@@ -138,27 +115,6 @@ export default function DashboardClient({
       return () => clearTimeout(timer);
     }
   }, [toast.show]);
-
-  // AI Smart Digest states
-  const [activeSummary, setActiveSummary] = useState<{ title: string; summary: string } | null>(null);
-  const [loadingSummaryUrl, setLoadingSummaryUrl] = useState<string | null>(null);
-
-  const handleSummarize = async (article: NewsArticle) => {
-    if (loadingSummaryUrl) return;
-    setLoadingSummaryUrl(article.url);
-    try {
-      const res = await summarizeNewsAction(article.title, article.description || "");
-      if (res.error) {
-        showToast(res.error, "error");
-      } else if (res.summary) {
-        setActiveSummary({ title: article.title, summary: res.summary });
-      }
-    } catch (err) {
-      showToast("Falha ao gerar resumo com IA.", "error");
-    } finally {
-      setLoadingSummaryUrl(null);
-    }
-  };
 
   const [dismissedAlert, setDismissedAlert] = useState(false);
 
@@ -666,7 +622,7 @@ export default function DashboardClient({
                   <div className="space-y-1">
                     <h4 className="text-sm font-black text-white uppercase tracking-wider italic">Cotas de API Estouradas</h4>
                     <p className="text-[11px] text-white/60 leading-relaxed font-medium">
-                      O limite de buscas gratuitas diárias das APIs em Português foi atingido. Ative o idioma <span className="text-red-400 font-bold">Inglês</span> no botão <span className="text-red-400 font-bold">"Linguagem & Filtros"</span> para utilizar o sistema de busca secundário (The Guardian API) e continuar navegando normalmente!
+                      O limite de buscas gratuitas diárias das APIs em Português foi atingido. Ative o idioma <span className="text-red-400 font-bold">Inglês</span> no botão <span className="text-red-400 font-bold">&quot;Linguagem &amp; Filtros&quot;</span> para utilizar o sistema de busca secundário (The Guardian API) e continuar navegando normalmente!
                     </p>
                   </div>
                 </div>
@@ -824,7 +780,7 @@ export default function DashboardClient({
                   )}
 
                   <div className={`grid grid-cols-1 md:grid-cols-2 ${gridColumns === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-6 transition-all duration-500 ${isPending ? 'opacity-30 blur-[2px]' : ''}`}>
-                    {newsList.slice(activeTab === 'explore' ? 1 : 0, (activeTab === 'home' || activeTab === 'explore') ? (activeTab === 'explore' ? visibleCount + 1 : visibleCount) : 999999).map((article, idx) => (
+                    {newsList.slice(activeTab === 'explore' ? 1 : 0, (activeTab === 'home' || activeTab === 'explore') ? (activeTab === 'explore' ? visibleCount + 1 : visibleCount) : 999999).map((article) => (
                       <PremiumNewsCard
                         key={article.url}
                         article={article}
@@ -905,7 +861,7 @@ export default function DashboardClient({
               {newPassword.length > 0 && (
                 <div className="p-3 text-[9px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-xl animate-pulse italic flex items-center gap-2">
                   <ShieldCheck size={14} className="text-cyan-400" />
-                  💡 CLIQUE EM "CONFIRMAR" ABAIXO PARA REDEFINIR E SALVAR SUA NOVA SENHA!
+                  💡 CLIQUE EM &quot;CONFIRMAR&quot; ABAIXO PARA REDEFINIR E SALVAR SUA NOVA SENHA!
                 </div>
               )}
             </div>
@@ -957,7 +913,7 @@ export default function DashboardClient({
               {newEmail.length > 0 && (
                 <div className="p-3 text-[9px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-xl animate-pulse italic flex items-center gap-2">
                   <ShieldCheck size={14} className="text-cyan-400" />
-                  💡 CLIQUE EM "CONFIRMAR" ABAIXO PARA ALTERAR E SALVAR SEU NOVO E-MAIL!
+                  💡 CLIQUE EM &quot;CONFIRMAR&quot; ABAIXO PARA ALTERAR E SALVAR SEU NOVO E-MAIL!
                 </div>
               )}
 
@@ -1189,287 +1145,3 @@ export default function DashboardClient({
 
 // Sub-componentes auxiliares (Temporários aqui para garantir funcionamento)
 
-function PremiumNewsCard({ article, isFavorite, onFavorite, onClick, gridColumns }: any) {
-  const category = article.category || "general";
-  const colorClass = tagColors[category] || "bg-zinc-700";
-
-  return (
-    <div className="group relative border border-white/5 bg-white/5 backdrop-blur-2xl rounded-[1.5rem] transition-all duration-700 flex flex-col h-full hover:border-white/20 hover:-translate-y-3 overflow-hidden cursor-pointer" onClick={onClick}>
-      <div className={`relative aspect-[16/9] ${gridColumns === 4 ? 'm-2 rounded-[0.9rem]' : 'm-2.5 rounded-[1rem]'} overflow-hidden`}>
-        <img src={article.urlToImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-        <div className="absolute top-3 right-3">
-          <div className={`${colorClass} px-3 py-1.5 rounded-md text-[7.5px] font-black uppercase text-white shadow-xl`}>{category}</div>
-        </div>
-      </div>
-      <div className={`flex flex-col flex-1 ${gridColumns === 4 ? 'p-4 gap-2.5' : 'p-5 gap-3.5'}`}>
-        <div className="text-[9px] text-white/50 font-bold uppercase tracking-wider flex items-center gap-3">
-          <span className="text-cyan-400">{article.source.name}</span>
-          <span>{new Date(article.publishedAt).toLocaleDateString('pt-BR')}</span>
-        </div>
-        <h3 className={`font-black text-white line-clamp-2 leading-snug ${gridColumns === 4 ? 'text-xs md:text-sm' : 'text-sm md:text-base'}`}>{article.title}</h3>
-        <p className={`leading-relaxed line-clamp-2 ${gridColumns === 4 ? 'text-[10px] text-white/30' : 'text-[11px] text-white/40'}`}>{article.description}</p>
-        <div className="mt-auto pt-4 flex items-center justify-between">
-          <button className={`font-black uppercase text-cyan-500 flex items-center gap-1.5 ${gridColumns === 4 ? 'text-[8px]' : 'text-[9px]'}`}>Ver Mais <ArrowRight size={12} /></button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onFavorite(); }}
-            className={`h-9 w-9 rounded-full flex items-center justify-center transition-all duration-500 border ${isFavorite ? "bg-purple-500/20 border-purple-500/50 text-purple-400 shadow-xl scale-110" : "bg-white/5 border-white/10 text-zinc-600 hover:text-white"}`}
-          >
-            <BookmarkIcon size={14} fill={isFavorite ? "currentColor" : "none"} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-
-function ProfileSection({
-  user,
-  profileName,
-  setProfileName,
-  profileAvatarUrl,
-  setProfileAvatarUrl,
-  profileCategories,
-  setProfileCategories,
-  handleSavePersonalData,
-  handleSaveInterests,
-  isSavingProfile,
-  logout,
-  setIsChangingPassword,
-  setIsDeletingAccount,
-  setIsChangingEmail,
-  ALL_POSSIBLE_CATEGORIES,
-  userIsVerifiedState,
-  handleOpenVerifyModal
-}: any) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: any) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      alert("A imagem é muito grande! Selecione um arquivo de no máximo 2MB para garantir a velocidade do sistema.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === "string") {
-        setProfileAvatarUrl(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  return (
-    <section className="max-w-4xl mx-auto py-12 space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept="image/*"
-        className="hidden"
-      />
-      <div className="flex items-center gap-6 p-8 rounded-[2.5rem] bg-white/5 border border-white/5 backdrop-blur-2xl relative overflow-hidden group">
-        <div
-          onClick={handleAvatarClick}
-          className="h-24 w-24 rounded-[2rem] bg-zinc-900 flex items-center justify-center overflow-hidden border border-cyan-500/20 shadow-2xl cursor-pointer relative group/avatar transition-all duration-500 hover:border-cyan-500 hover:scale-105"
-        >
-          {profileAvatarUrl ? (
-            <img src={profileAvatarUrl} className="w-full h-full object-cover transition-opacity group-hover/avatar:opacity-40" onError={(e: any) => e.target.style.display = 'none'} />
-          ) : (
-            <span className="text-white text-2xl font-black group-hover/avatar:opacity-40">{user.name.substring(0, 2)}</span>
-          )}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
-            <Camera size={20} className="text-cyan-400" />
-          </div>
-        </div>
-        <div className="flex-1">
-          <h2 className="text-3xl font-black text-white tracking-tighter">{user.name}</h2>
-          {userIsVerifiedState ? (
-            <div className="flex items-center gap-2 text-emerald-400 text-[10px] font-black uppercase tracking-widest mt-1.5">
-              <ShieldCheck size={12} className="text-emerald-400" />
-              E-mail Verificado
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-rose-400 text-[10px] font-black uppercase tracking-widest mt-1.5 flex-wrap">
-              <AlertCircle size={12} className="text-rose-400 animate-pulse" />
-              E-mail não verificado
-              <button
-                onClick={handleOpenVerifyModal}
-                className="ml-2 px-2.5 py-1 rounded-lg bg-cyan-500 text-black font-black uppercase text-[8px] tracking-wider flex items-center justify-center hover:bg-cyan-400 transition-all shadow-lg hover:shadow-cyan-500/20 active:scale-95 cursor-pointer border-none"
-              >
-                Verificar Agora
-              </button>
-            </div>
-          )}
-        </div>
-        <div>
-          <Button onClick={logout} className="bg-white/5 hover:bg-white/10 text-white h-12 w-12 rounded-xl transition-all border border-white/5 shadow-lg flex items-center justify-center"><LogOut size={20} /></Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-        {/* CARD DADOS PESSOAIS */}
-        <div className="p-5 md:p-6 rounded-[2rem] bg-white/5 border border-white/5 space-y-4 flex flex-col justify-between">
-          <div>
-            <h3 className="text-base font-black text-white uppercase tracking-widest italic mb-2">Dados Pessoais</h3>
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-white/60 font-black text-[9px] uppercase tracking-wider">Seu Nome</Label>
-                <Input
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  className="bg-black/40 border-white/10 text-white h-10 rounded-xl focus:border-cyan-500/50 text-sm"
-                  placeholder="Seu nome"
-                />
-              </div>
-              {(profileName !== user.name || profileAvatarUrl !== (user.avatarUrl || "")) && (
-                <div className="p-3 text-[9px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-xl animate-pulse italic flex items-center gap-2">
-                  <ShieldCheck size={14} className="text-cyan-400" />
-                  💡 VOCÊ ALTEROU SEUS DADOS! CLIQUE EM "SALVAR ALTERAÇÕES" ABAIXO PARA APLICAR.
-                </div>
-              )}
-              <div className="pt-2 grid grid-cols-2 gap-3">
-                <Button
-                  type="button"
-                  onClick={() => setIsChangingEmail(true)}
-                  className="w-full h-9 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-xl border border-white/5 transition-all text-[10px] tracking-wider"
-                >
-                  Alterar E-mail
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setIsChangingPassword(true)}
-                  className="w-full h-9 bg-white/5 hover:bg-white/10 text-white font-black uppercase rounded-xl border border-white/5 transition-all text-[10px] tracking-wider"
-                >
-                  Alterar Senha
-                </Button>
-              </div>
-            </div>
-          </div>
-          <Button onClick={handleSavePersonalData} disabled={isSavingProfile} className="w-full h-10 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase rounded-xl shadow-xl transition-all text-xs tracking-widest mt-4">Salvar Alterações</Button>
-        </div>
-
-        {/* CARD INTERESSES */}
-        <div className="p-5 md:p-6 rounded-[2rem] bg-white/5 border border-white/5 space-y-4 flex flex-col justify-between">
-          <div>
-            <h3 className="text-base font-black text-white uppercase tracking-widest italic mb-4">Interesses</h3>
-            <div className="flex flex-wrap gap-2 items-start content-start">
-              {ALL_POSSIBLE_CATEGORIES.map((cat: any) => (
-                <button
-                  key={cat.slug}
-                  onClick={() => setProfileCategories((p: any) => p.includes(cat.slug) ? p.filter((c: any) => c !== cat.slug) : [...p, cat.slug])}
-                  className={`px-3.5 py-2 rounded-xl text-[10px] font-black uppercase border transition-all ${profileCategories.includes(cat.slug) ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-xl' : 'bg-white/5 border-white/5 text-zinc-600 hover:text-white'}`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <Button onClick={handleSaveInterests} disabled={isSavingProfile} className="w-full h-10 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase rounded-xl shadow-xl shadow-purple-600/10 transition-all text-xs tracking-widest mt-4">Atualizar Interesses</Button>
-        </div>
-      </div>
-
-      {/* CARD ZONA DE PERIGO (LARGURA TOTAL) */}
-      <div className="p-6 md:p-8 rounded-[2rem] bg-red-500/5 border border-red-500/10 hover:border-red-500/20 transition-all space-y-6 flex flex-col">
-        <h3 className="text-lg font-black text-red-500 uppercase tracking-widest italic flex items-center gap-3">
-          <AlertCircle size={20} className="text-red-500" />
-          Deletar Conta
-        </h3>
-        <p className="text-[11px] text-white/40 font-bold leading-relaxed">ATENÇÃO TOTAL: Esta ação excluirá permanentemente o seu perfil, favoritos e histórico do TrackFeed de forma irreversível.</p>
-        <div className="pt-2">
-          <Button onClick={() => setIsDeletingAccount(true)} className="w-full h-12 bg-red-950/20 hover:bg-red-600 text-red-500 hover:text-white font-black uppercase rounded-2xl border border-red-500/20 transition-all shadow-xl shadow-red-950/30">Excluir Conta Permanentemente</Button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function NewsSkeletonGrid({ gridColumns }: { gridColumns: number }) {
-  return (
-    <div className={`grid grid-cols-1 md:grid-cols-2 ${gridColumns === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-8 animate-in fade-in duration-500`}>
-      {[...Array(6)].map((_, i) => (
-        <div
-          key={i}
-          className="h-[480px] rounded-[2.5rem] bg-white/5 border border-white/5 p-8 flex flex-col justify-between animate-pulse"
-        >
-          <div className="space-y-6">
-            {/* Imagem Placeholder */}
-            <div className="h-48 w-full bg-white/5 rounded-[2rem]" />
-
-            {/* Linha Categoria / Data */}
-            <div className="flex gap-4">
-              <div className="h-4 w-16 bg-white/5 rounded-full" />
-              <div className="h-4 w-24 bg-white/5 rounded-full" />
-            </div>
-
-            {/* Linha Título */}
-            <div className="space-y-3">
-              <div className="h-6 w-full bg-white/5 rounded-xl" />
-              <div className="h-6 w-5/6 bg-white/5 rounded-xl" />
-            </div>
-          </div>
-
-          {/* Linha Botão de Ação */}
-          <div className="flex justify-between items-center pt-6">
-            <div className="h-5 w-20 bg-white/5 rounded-full" />
-            <div className="h-8 w-8 bg-white/5 rounded-full" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function HistoryStats({ stats, isFavs }: any) {
-  const categories = Object.entries(stats.categories).sort((a: any, b: any) => b[1] - a[1]);
-  const total = stats.totalRead;
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-10 animate-in fade-in slide-in-from-top-8 duration-1000">
-      <div className="lg:col-span-2 p-5 md:p-6 rounded-tr-[2rem] rounded-bl-[2rem] rounded-br-[2rem] rounded-tl-none bg-white/5 border border-white/10 backdrop-blur-3xl space-y-5">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-black text-white uppercase tracking-widest italic">Distribuição por Tópico</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-          {categories.map(([cat, count]: any) => (
-            <div key={cat} className="space-y-1">
-              <div className="flex justify-between text-[9px] font-black uppercase">
-                <span className="text-white/60">{cat}</span>
-                <span className="text-cyan-400">{Math.round((count / total) * 100)}%</span>
-              </div>
-              <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${tagColors[cat] || 'bg-zinc-500'} transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(6,182,212,0.5)]`}
-                  style={{ width: `${(count / total) * 100}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded-[2rem] bg-gradient-to-br from-cyan-600/10 to-purple-600/5 border border-cyan-500/10 backdrop-blur-3xl p-5 md:p-6 flex flex-col justify-center items-center text-center space-y-1 shadow-2xl h-full">
-        <div className="text-5xl font-black text-white tracking-tighter">{stats.totalClicks}</div>
-        <div className="text-[9px] font-black text-purple-400 uppercase tracking-[0.2em]">Total de Interações</div>
-      </div>
-    </div>
-  );
-}
-
-function EmptyState({ title, description }: any) {
-  return (
-    <div className="flex flex-col items-center justify-center py-40 text-center animate-in fade-in zoom-in duration-700">
-      <SearchX size={64} className="text-zinc-800 mb-8" />
-      <h3 className="text-3xl font-black uppercase text-zinc-500 tracking-tighter">{title}</h3>
-      <p className="text-zinc-600 font-bold mt-2">{description}</p>
-    </div>
-  );
-}

@@ -3,11 +3,14 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { loginSchema } from "@/lib/validations";
 import { verifyRecaptcha } from "@/lib/captcha";
+import { setSessionCookie } from "@/lib/session";
 
-export async function loginUser(prevState: any, formData: FormData) {
+const MAX_LOGIN_FAILURES = 5;
+const LOGIN_LOCK_MS = 15 * 60 * 1000;
+
+export async function loginUser(prevState: unknown, formData: FormData) {
   const rawData = Object.fromEntries(formData.entries());
   
   // VALIDAÇÃO COM ZOD
@@ -22,6 +25,7 @@ export async function loginUser(prevState: any, formData: FormData) {
   }
 
   const { identifier, password } = validated.data;
+  const normalizedIdentifier = identifier.toLowerCase();
   const captchaToken = formData.get("g-recaptcha-response") as string;
   
   // VERIFICAÇÃO RECAPTCHA (GOOGLE)
@@ -38,12 +42,26 @@ export async function loginUser(prevState: any, formData: FormData) {
     }
   }
 
+  // Rate limit por identificador: trava após MAX_LOGIN_FAILURES erros seguidos.
+  // Fica no banco (e não em memória) porque a app roda serverless — cada instância
+  // teria o próprio contador e o limite não valeria nada.
+  const attempt = await prisma.loginAttempt.findUnique({ where: { identifier: normalizedIdentifier } });
+  if (attempt && attempt.failedCount >= MAX_LOGIN_FAILURES) {
+    const elapsed = Date.now() - attempt.lastFailAt.getTime();
+    if (elapsed < LOGIN_LOCK_MS) {
+      return {
+        error: `Muitas tentativas. Tente novamente em ${Math.ceil((LOGIN_LOCK_MS - elapsed) / 60000)} min.`,
+        identifier,
+        timestamp: Date.now()
+      };
+    }
+  }
 
-  // 1. Tenta achar o usuário
+  // 1. Tenta achar o usuário (identifier normalizado evita falha de login com e-mail em maiúsculas)
   const user = await prisma.user.findFirst({
     where: {
       OR: [
-        { email: identifier },
+        { email: normalizedIdentifier },
         { name: identifier }
       ]
     },
@@ -52,34 +70,31 @@ export async function loginUser(prevState: any, formData: FormData) {
     }
   });
 
-  // SE NÃO EXISTIR: Não devolvemos o identifier (limpa tudo)
+  // Mensagem genérica: não revela se o problema foi usuário inexistente ou senha errada
+  const invalidCredentials = {
+    error: "Usuário/e-mail ou senha incorretos.",
+    identifier: identifier,
+    timestamp: Date.now()
+  };
+
   if (!user) {
-    return { 
-        error: "Usuário ou e-mail não encontrado.",
-        timestamp: Date.now() 
-    };
+    await registerLoginFailure(normalizedIdentifier);
+    return invalidCredentials;
   }
 
   // 2. Verifica a senha
   const isPasswordCorrect = await bcrypt.compare(password, user.passwordHash);
 
-  // SE SENHA INCORRETA: Devolvemos o identifier (mantém o usuário, limpa só a senha)
   if (!isPasswordCorrect) {
-    return { 
-        error: "Senha incorreta. Tente novamente.",
-        identifier: identifier,
-        timestamp: Date.now() 
-    };
+    await registerLoginFailure(normalizedIdentifier);
+    return invalidCredentials;
   }
 
-  // 3. Sucesso! Configura o Cookie de Sessão
-  const cookieStore = await cookies();
-  cookieStore.set("userId", user.id, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 24 * 7, // 1 semana
-    path: "/",
-  });
+  // Login válido zera o histórico de falhas
+  await prisma.loginAttempt.deleteMany({ where: { identifier: normalizedIdentifier } });
+
+  // 3. Sucesso! Configura o Cookie de Sessão assinado
+  await setSessionCookie(user.id, user.sessionVersion);
 
   // 4. Redirecionamento Inteligente
   if (user.preferences.length === 0) {
@@ -87,4 +102,21 @@ export async function loginUser(prevState: any, formData: FormData) {
   } else {
     redirect("/dashboard");
   }
+}
+
+async function registerLoginFailure(identifier: string) {
+  // Descarta registros já fora da janela de bloqueio. Sem isso a tabela cresceria
+  // sem limite — qualquer identificador inexistente tentado vira uma linha permanente.
+  await prisma.loginAttempt.deleteMany({
+    where: { lastFailAt: { lt: new Date(Date.now() - LOGIN_LOCK_MS) } }
+  });
+
+  const existing = await prisma.loginAttempt.findUnique({ where: { identifier } });
+  // Se a janela de bloqueio já passou, o contador recomeça do zero
+  const expired = existing && Date.now() - existing.lastFailAt.getTime() >= LOGIN_LOCK_MS;
+  await prisma.loginAttempt.upsert({
+    where: { identifier },
+    update: { failedCount: expired ? 1 : { increment: 1 }, lastFailAt: new Date() },
+    create: { identifier, failedCount: 1, lastFailAt: new Date() }
+  });
 }

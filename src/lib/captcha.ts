@@ -5,7 +5,7 @@ export async function verifyRecaptcha(token: string) {
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
   if (!secretKey) {
     console.error(">>> [CAPTCHA] RECAPTCHA_SECRET_KEY não configurada!");
-    return true; // Falha segura se não houver chave configurada
+    return false; // Fail-closed: sem chave configurada, nenhum token é aceito
   }
 
   if (!token) return false;

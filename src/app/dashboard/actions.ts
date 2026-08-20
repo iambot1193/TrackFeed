@@ -1,10 +1,12 @@
 'use server'
 
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { sendVerificationEmail } from "@/lib/mail";
+import { getSessionUserId, clearSessionCookie, setSessionCookie } from "@/lib/session";
+import { setUserPreferences, sanitizeCategories } from "@/lib/preferences";
+import { verifyEmailCode, resendVerificationCode } from "@/lib/verification";
+import { nameSchema, avatarUrlSchema, passwordSchema, emailSchema } from "@/lib/validations";
 
 /**
  * Alterna o estado de favorito de um artigo.
@@ -17,8 +19,7 @@ export async function toggleFavorite(article: {
   sourceName: string;
   publishedAt: string;
 }) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  const userId = await getSessionUserId();
 
   if (!userId) return { error: "Sessão expirada. Por favor, faça login novamente." };
 
@@ -61,27 +62,21 @@ export async function toggleFavorite(article: {
 /**
  * Busca os favoritos de um usuário.
  */
-export async function getUserFavorites(userIdParam: string) {
-  const cookieStore = await cookies();
-  const sessionUserId = cookieStore.get("userId")?.value;
-  if (!sessionUserId || sessionUserId !== userIdParam) return [];
+export async function getUserFavorites() {
+  const userId = await getSessionUserId();
+  if (!userId) return [];
 
-  try {
-    return await prisma.favorite.findMany({
-      where: { userId: sessionUserId },
-      orderBy: { savedAt: 'desc' }
-    });
-  } catch (error) {
-    return [];
-  }
+  return prisma.favorite.findMany({
+    where: { userId },
+    orderBy: { savedAt: 'desc' }
+  });
 }
 
 /**
  * Adiciona uma notícia ao histórico de leitura do usuário.
  */
 export async function addToHistory(data: { title: string; url: string; imageUrl?: string }) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return;
 
   try {
@@ -127,8 +122,7 @@ export async function updateUserProfile(data: {
   interests?: string[]; // Adicionado campo de categorias
   email?: string; // Suporte para e-mail
 }) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return { error: "Usuário não autenticado." };
 
   try {
@@ -146,44 +140,78 @@ export async function updateUserProfile(data: {
     }
 
     const updateData: any = {};
-    if (data.name) updateData.name = data.name;
-    if (data.avatarUrl) updateData.avatarUrl = data.avatarUrl;
-    
+
+    if (data.name) {
+      // Mesmas regras de formato do cadastro — Server Action é endpoint público
+      const validName = nameSchema.safeParse(data.name);
+      if (!validName.success) return { error: validName.error.errors[0].message };
+
+      const nameExists = await prisma.user.findFirst({
+        where: { name: validName.data, NOT: { id: userId } }
+      });
+      if (nameExists) return { error: "Este nome de usuário já está sendo usado." };
+      updateData.name = validName.data;
+    }
+
+    if (data.avatarUrl) {
+      const validAvatar = avatarUrlSchema.safeParse(data.avatarUrl);
+      if (!validAvatar.success) return { error: validAvatar.error.errors[0].message };
+      updateData.avatarUrl = validAvatar.data;
+    }
+
     if (data.email) {
+      const validEmail = emailSchema.safeParse(data.email);
+      if (!validEmail.success) return { error: validEmail.error.errors[0].message };
+      const normalizedEmail = validEmail.data;
       const emailExists = await prisma.user.findFirst({
         where: {
-          email: data.email,
+          email: normalizedEmail,
           NOT: { id: userId }
         }
       });
       if (emailExists) return { error: "Este e-mail já está sendo utilizado por outro usuário." };
-      updateData.email = data.email;
+      updateData.email = normalizedEmail;
+      // Trocar o e-mail invalida a verificação anterior. É obrigatório descartar também o
+      // código pendente: ele foi enviado para o endereço ANTIGO e, se continuasse válido,
+      // permitiria verificar o endereço novo sem nunca ter acesso à caixa de entrada dele.
+      updateData.emailVerified = null;
+      updateData.verificationCode = null;
+      updateData.verificationCodeExpires = null;
+      updateData.verificationAttempts = 0;
     }
 
     if (data.password) {
-      if (data.password.length < 6) return { error: "A nova senha deve ter pelo menos 6 caracteres." };
-      updateData.passwordHash = await bcrypt.hash(data.password, 10);
+      const validPassword = passwordSchema.safeParse(data.password);
+      if (!validPassword.success) return { error: validPassword.error.errors[0].message };
+      updateData.passwordHash = await bcrypt.hash(validPassword.data, 10);
+      // Revoga qualquer outra sessão aberta com a senha antiga
+      updateData.sessionVersion = { increment: 1 };
+    }
+
+    // Salvar interesses vazios apagaria todas as preferências e expulsaria o usuário
+    // da dashboard (que redireciona para /interests quando não há nenhuma).
+    if (data.interests && sanitizeCategories(data.interests).length < 1) {
+      return { error: "Selecione pelo menos 1 interesse válido." };
     }
 
     // ATUALIZAÇÃO UNIFICADA: Perfil + Interesses
-    await prisma.$transaction(async (tx) => {
-      // Atualiza Nome/Senha
-      await tx.user.update({
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      const updated = await tx.user.update({
         where: { id: userId },
         data: updateData
       });
 
-      // Atualiza Categorias (se enviadas)
       if (data.interests) {
-        await tx.preference.deleteMany({ where: { userId } });
-        await tx.preference.createMany({
-          data: data.interests.map(cat => ({
-            userId,
-            categoryName: cat
-          }))
-        });
+        await setUserPreferences(userId, data.interests, tx);
       }
+
+      return updated;
     });
+
+    // Reemite o cookie com a nova versão para não derrubar a sessão atual
+    if (data.password) {
+      await setSessionCookie(userId, updatedUser.sessionVersion);
+    }
 
     revalidatePath("/dashboard");
     return { success: true };
@@ -197,24 +225,15 @@ export async function updateUserProfile(data: {
  * Atualiza as preferências de categorias do usuário.
  */
 export async function updateUserPreferences(categories: string[]) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return { error: "Sessão expirada." };
 
+  if (sanitizeCategories(categories).length < 1) {
+    return { error: "Selecione pelo menos 1 interesse válido." };
+  }
+
   try {
-    // 1. Remove as preferências antigas
-    await prisma.preference.deleteMany({
-      where: { userId }
-    });
-
-    // 2. Cria as novas preferências
-    await prisma.preference.createMany({
-      data: categories.map(cat => ({
-        userId,
-        categoryName: cat
-      }))
-    });
-
+    await setUserPreferences(userId, categories);
     revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
@@ -228,8 +247,7 @@ export async function updateUserPreferences(categories: string[]) {
  * Exige a senha para confirmação final.
  */
 export async function deleteAccountAction(password: string) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return { error: "Sessão expirada." };
 
   try {
@@ -240,17 +258,12 @@ export async function deleteAccountAction(password: string) {
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) return { error: "Senha incorreta. Não foi possível deletar a conta." };
 
-    // 2. Deleta dados relacionados (O Prisma cuidará se houver Cascade, mas vamos garantir)
-    await prisma.$transaction([
-      prisma.preference.deleteMany({ where: { userId } }),
-      prisma.favorite.deleteMany({ where: { userId } }),
-      prisma.history.deleteMany({ where: { userId } }),
-      prisma.user.delete({ where: { id: userId } })
-    ]);
+    // 2. Deleta o usuário — Preference/Favorite/History têm onDelete: Cascade no schema
+    await prisma.user.delete({ where: { id: userId } });
 
     // 3. Limpa Cookie e Redireciona
-    cookieStore.delete("userId");
-    
+    await clearSessionCookie();
+
     return { success: true };
   } catch (error) {
     console.error(">>> ERRO AO DELETAR CONTA:", error);
@@ -278,8 +291,7 @@ export async function getApiStatusAction() {
  * Realiza o Logout removendo o cookie de sessão.
  */
 export async function logout() {
-  const cookieStore = await cookies();
-  cookieStore.delete("userId");
+  await clearSessionCookie();
   return { success: true };
 }
 
@@ -287,73 +299,16 @@ export async function logout() {
  * Reenvia o código de verificação para o usuário logado.
  */
 export async function resendVerificationEmailAction() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return { error: "Sessão expirada." };
-
-  try {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return { error: "Usuário não encontrado." };
-    if (user.emailVerified) return { error: "Sua conta já está verificada." };
-
-    // Gera novo código de 6 dígitos
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    await prisma.user.update({
-      where: { id: userId },
-      data: { verificationCode: code }
-    });
-
-    await sendVerificationEmail(user.email, user.name || "Usuário", code);
-    
-    return { success: true };
-  } catch (error) {
-    console.error(">>> ERRO REENVIAR EMAIL:", error);
-    return { error: "Falha ao enviar e-mail. Tente novamente mais tarde." };
-  }
-}
-
-/**
- * AI SMART DIGEST: Gera um resumo da notícia sob demanda.
- */
-export async function summarizeNewsAction(title: string, description: string) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
-  if (!userId) return { error: "Sessão expirada." };
-
-  const { summarizeArticle } = await import("@/lib/news");
-  const summary = await summarizeArticle(title, description);
-  return { summary };
+  return resendVerificationCode(userId);
 }
 
 /**
  * Verifica o código de e-mail enviado diretamente da dashboard.
  */
 export async function verifyEmailInDashboardAction(code: string) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return { error: "Sessão expirada." };
-
-  try {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return { error: "Usuário não encontrado." };
-    if (user.emailVerified) return { error: "Sua conta já está verificada." };
-
-    if (user.verificationCode !== code) {
-      return { error: "Código incorreto. Verifique seu e-mail e tente novamente." };
-    }
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        emailVerified: new Date(),
-        verificationCode: null
-      }
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error(">>> ERRO VERIFICAÇÃO DASHBOARD:", error);
-    return { error: "Ocorreu um erro no servidor. Tente novamente." };
-  }
+  return verifyEmailCode(userId, code);
 }
