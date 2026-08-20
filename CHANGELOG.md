@@ -16,6 +16,7 @@ Rodada de endurecimento de segurança, qualidade de código e documentação. To
 - **Mensagens genéricas** em login e recuperação de senha (não revelam existência da conta).
 - **Validação nos trust boundaries**: `updateUserProfile` revalida nome, e-mail, senha e categorias com os schemas Zod compartilhados; e-mail normalizado para minúsculas; guardas contra apagar todas as preferências.
 - **Middleware** protege as rotas privadas com checagem de assinatura no edge; a checagem autoritativa de versão fica nas Server Actions.
+- **Headers de segurança HTTP** em `next.config.ts`: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`; `X-Powered-By` desativado.
 
 ### Adicionado
 

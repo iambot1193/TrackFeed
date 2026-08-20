@@ -48,6 +48,7 @@ Decisões de segurança aplicadas, todas verificadas com um smoke test ponta a p
 - **XSS / mass assignment** — nome restrito a alfanumérico, avatar limitado a URLs http(s) e data URLs de imagem (SVG fora da whitelist); os campos de atualização de perfil são montados um a um, sem espalhar o input do cliente.
 - **CSRF** — coberto pela verificação nativa de Origin das Server Actions do Next 15.
 - **Cookie** — `httpOnly`, `sameSite=lax` e `secure` em produção.
+- **Headers HTTP** — `X-Frame-Options: DENY` (anti-clickjacking), `X-Content-Type-Options: nosniff`, `Referrer-Policy` e `Permissions-Policy` em todas as rotas; `X-Powered-By` desativado.
 
 ## Stack
 
