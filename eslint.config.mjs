@@ -1,17 +1,10 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
 import { defineConfig, globalIgnores } from "eslint/config";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
+import nextTypescript from "eslint-config-next/typescript";
 
 const eslintConfig = defineConfig([
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...nextCoreWebVitals,
+  ...nextTypescript,
   globalIgnores([
     ".next/**",
     "out/**",
@@ -24,6 +17,9 @@ const eslintConfig = defineConfig([
       // Legado com muitos `any` em shapes de API externas; rebaixado para não travar o build.
       // TODO: tipar aos poucos (payloads do NewsAPI/GNews/Guardian, props internas).
       "@typescript-eslint/no-explicit-any": "warn",
+      // next 16 promoveu essa regra a error; nossos usos são hidratação client-only
+      // (tema do localStorage, partículas aleatórias no mount) — padrão intencional, não bug.
+      "react-hooks/set-state-in-effect": "warn",
     },
   },
 ]);
