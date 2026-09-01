@@ -397,7 +397,7 @@ export default function DashboardClient({
 
     const result = passwordSchema.safeParse(newPassword);
     if (!result.success) {
-      showToast(result.error.errors[0].message, "error");
+      showToast(result.error.issues[0].message, "error");
       return;
     }
 
@@ -428,7 +428,7 @@ export default function DashboardClient({
     const emailSchema = z.string().email("Por favor, digite um e-mail válido.");
     const result = emailSchema.safeParse(newEmail);
     if (!result.success) {
-      showToast(result.error.errors[0].message, "error");
+      showToast(result.error.issues[0].message, "error");
       return;
     }
 

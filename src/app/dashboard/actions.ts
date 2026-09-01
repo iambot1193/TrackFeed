@@ -144,7 +144,7 @@ export async function updateUserProfile(data: {
     if (data.name) {
       // Mesmas regras de formato do cadastro — Server Action é endpoint público
       const validName = nameSchema.safeParse(data.name);
-      if (!validName.success) return { error: validName.error.errors[0].message };
+      if (!validName.success) return { error: validName.error.issues[0].message };
 
       const nameExists = await prisma.user.findFirst({
         where: { name: validName.data, NOT: { id: userId } }
@@ -155,13 +155,13 @@ export async function updateUserProfile(data: {
 
     if (data.avatarUrl) {
       const validAvatar = avatarUrlSchema.safeParse(data.avatarUrl);
-      if (!validAvatar.success) return { error: validAvatar.error.errors[0].message };
+      if (!validAvatar.success) return { error: validAvatar.error.issues[0].message };
       updateData.avatarUrl = validAvatar.data;
     }
 
     if (data.email) {
       const validEmail = emailSchema.safeParse(data.email);
-      if (!validEmail.success) return { error: validEmail.error.errors[0].message };
+      if (!validEmail.success) return { error: validEmail.error.issues[0].message };
       const normalizedEmail = validEmail.data;
       const emailExists = await prisma.user.findFirst({
         where: {
@@ -182,7 +182,7 @@ export async function updateUserProfile(data: {
 
     if (data.password) {
       const validPassword = passwordSchema.safeParse(data.password);
-      if (!validPassword.success) return { error: validPassword.error.errors[0].message };
+      if (!validPassword.success) return { error: validPassword.error.issues[0].message };
       updateData.passwordHash = await bcrypt.hash(validPassword.data, 10);
       // Revoga qualquer outra sessão aberta com a senha antiga
       updateData.sessionVersion = { increment: 1 };
