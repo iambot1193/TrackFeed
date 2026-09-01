@@ -1,5 +1,7 @@
 # TrackFeed
 
+[![CI](https://github.com/iambot1193/TrackFeed/actions/workflows/ci.yml/badge.svg)](https://github.com/iambot1193/TrackFeed/actions/workflows/ci.yml)
+
 Dashboard de notícias personalizadas: o usuário escolhe categorias de interesse e o feed busca, deduplica e categoriza notícias em tempo real a partir de três provedores (NewsAPI, GNews, The Guardian), com um passo extra de classificação por IA (Gemini) quando a categorização por palavra-chave fica em dúvida.
 
 Construído como resposta a um desafio técnico da Trackland; o checklist original de critérios está em [`docs/desafio.md`](./docs/desafio.md).
