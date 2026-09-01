@@ -16,7 +16,7 @@ export async function registerUser(prevState: unknown, formData: FormData) {
     
     if (!validated.success) {
         return { 
-            error: validated.error.errors[0].message,
+            error: validated.error.issues[0].message,
             name: rawData.name as string,
             email: rawData.email as string,
             timestamp: Date.now()

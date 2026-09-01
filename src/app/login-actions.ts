@@ -18,7 +18,7 @@ export async function loginUser(prevState: unknown, formData: FormData) {
   
   if (!validated.success) {
     return { 
-        error: validated.error.errors[0].message,
+        error: validated.error.issues[0].message,
         identifier: rawData.identifier as string,
         timestamp: Date.now() 
     };
