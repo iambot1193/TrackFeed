@@ -7,7 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test:session": "node scripts/session-selfcheck.mjs"
+    "test:session": "node scripts/session-selfcheck.mjs",
+    "test:db": "node scripts/db-selfcheck.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

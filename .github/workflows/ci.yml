@@ -6,16 +6,39 @@ on:
   pull_request:
 
 jobs:
-  lint-and-typecheck:
+  checks:
     runs-on: ubuntu-latest
+
+    # Prisma 7 conecta por driver adapter: sem um Postgres de verdade o CI
+    # provaria só que o client compila, não que ele fala com o banco.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: trackfeed
+          POSTGRES_PASSWORD: trackfeed
+          POSTGRES_DB: trackfeed
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://trackfeed:trackfeed@localhost:5432/trackfeed?schema=public
+
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npx prisma generate
       - run: npm run lint
       - run: npx tsc --noEmit
       - run: npm run test:session
+      - run: npx prisma db push
+      - run: npm run test:db

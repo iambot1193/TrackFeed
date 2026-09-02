@@ -54,8 +54,8 @@ Decisões de segurança aplicadas, todas verificadas com um smoke test ponta a p
 
 ## Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org/) (App Router, Server Actions)
-- **Banco**: PostgreSQL via [Prisma ORM](https://www.prisma.io/)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Server Actions)
+- **Banco**: PostgreSQL via [Prisma ORM](https://www.prisma.io/) 7 (driver adapter `@prisma/adapter-pg`)
 - **IA**: Google Gemini 2.0 Flash, usado só como fallback de classificação em lote
 - **Estilização**: Tailwind CSS 4
 - **E-mail transacional**: [Resend](https://resend.com/)

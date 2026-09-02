@@ -1,9 +1,9 @@
 import { defineConfig } from "prisma/config";
 
-// Prisma 7: a URL de conex„o saiu do schema. CLI/Migrate leem daqui;
-// o PrismaClient em runtime continua lendo DATABASE_URL do ambiente.
-// process.env direto (n„o o helper env()) para n„o estourar quando a var
-// est· ausente ó `prisma generate` no CI roda sem banco.
+// Prisma 7: a URL de conex√£o saiu do schema. CLI/Migrate leem daqui;
+// em runtime o PrismaClient recebe a URL pelo driver adapter (src/lib/prisma.ts).
+// process.env direto (n√£o o helper env()) para n√£o estourar quando a var
+// est√° ausente ‚Äî `prisma generate` no CI roda sem banco.
 export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
